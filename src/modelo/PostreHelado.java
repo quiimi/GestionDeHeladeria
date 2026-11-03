@@ -1,3 +1,5 @@
+package modelo;
+
 public class PostreHelado extends Producto {
     private String tipoPostre;
 

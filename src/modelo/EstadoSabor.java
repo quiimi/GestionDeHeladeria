@@ -1,3 +1,5 @@
+package modelo;
+
 public enum EstadoSabor {
     DISPONIBLE, SIN_STOCK, EN_ELABORACION, LIMPIEZA_BACHA
 }

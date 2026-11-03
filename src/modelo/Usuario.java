@@ -1,3 +1,5 @@
+package modelo;
+
 public abstract class Usuario extends Persona {
     protected String username;
 

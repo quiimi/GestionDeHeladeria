@@ -1,3 +1,5 @@
+package modelo;
+
 public class SaborHelado {
     private String nombre;
     private boolean esSinTacc;
@@ -30,4 +32,11 @@ public class SaborHelado {
         this.esVegano = esVegano;
     }
 
+    public EstadoSabor getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoSabor estado) {
+        this.estado = estado;
+    }
 }
