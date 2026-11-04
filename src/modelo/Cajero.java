@@ -33,4 +33,21 @@ public class Cajero extends Usuario {
         }
         System.out.println("Pedido procesado exitosamente por " + nombre);
     }
+
+    public static class PedidoLocal extends Pedido {
+        private int numeroMesa;
+
+        public PedidoLocal(Cliente cliente, Cajero cajero, int numeroMesa) {
+            super(cliente, cajero);
+            this.numeroMesa = numeroMesa;
+        }
+
+        @Override
+        public String getTipoPedido() {
+            return "LOCAL";
+        }
+
+        public int getNumeroMesa() { return numeroMesa; }
+
+    }
 }
