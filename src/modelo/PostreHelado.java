@@ -1,9 +1,9 @@
 package modelo;
 
 public class PostreHelado extends Producto {
-    private String tipoPostre;
+    private TipoPostre tipoPostre;
 
-    public PostreHelado(int id, String nombre, double precioBase, String tipoPostre) {
+    public PostreHelado(int id, String nombre, double precioBase, TipoPostre tipoPostre) {
         super(id, nombre, precioBase);
         this.tipoPostre = tipoPostre;
     }
@@ -13,5 +13,5 @@ public class PostreHelado extends Producto {
         return precioBase;
     }
 
-    public String getTipoPostre() { return tipoPostre; }
+    public TipoPostre getTipoPostre() { return tipoPostre; }
 }

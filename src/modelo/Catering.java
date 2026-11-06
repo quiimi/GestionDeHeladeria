@@ -1,6 +1,7 @@
 package modelo;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Catering {
     private int id;
@@ -30,13 +31,52 @@ public class Catering {
         return montoTotal - montoSenia;
     }
 
+    // Métodos alias para compatibilidad con VentaDAO y HeladeriaSystem
+    public double getSenia() {
+        return montoSenia;
+    }
+
+    public double getTotal() {
+        return montoTotal;
+    }
+
+    public double getSaldoPendiente() {
+        return calcularSaldoPendiente();
+    }
+
+    // Getters y Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
+
     public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+
     public LocalDateTime getFechaEvento() { return fechaEvento; }
+    public void setFechaEvento(LocalDateTime fechaEvento) { this.fechaEvento = fechaEvento; }
+
     public int getCantPersonas() { return cantPersonas; }
+    public void setCantPersonas(int cantPersonas) { this.cantPersonas = cantPersonas; }
+
     public double getMontoSenia() { return montoSenia; }
+    public void setMontoSenia(double montoSenia) { this.montoSenia = montoSenia; }
+
     public double getMontoTotal() { return montoTotal; }
+    public void setMontoTotal(double montoTotal) { this.montoTotal = montoTotal; }
+
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    @Override
+    public String toString() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String fechaFormateada = (fechaEvento != null) ? fechaEvento.format(formatter) : "N/A";
+        return "Catering ID: " + id
+                + " | Cliente: " + (cliente != null ? cliente.getNombre() + " (DNI: " + cliente.getDni() + ")" : "N/A")
+                + " | Fecha Evento: " + fechaFormateada
+                + " | Personas: " + cantPersonas
+                + " | Seña: $" + montoSenia
+                + " | Total: $" + montoTotal
+                + " | Saldo Pendiente: $" + calcularSaldoPendiente()
+                + " | Estado: " + estado;
+    }
 }

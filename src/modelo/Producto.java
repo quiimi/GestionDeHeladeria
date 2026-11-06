@@ -13,26 +13,10 @@ public abstract class Producto {
 
     public abstract double calcularPrecio();
 
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public String getNombre() {
-        return nombre;
-    }
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-    public double getPrecioBase() {
-        return precioBase;
-    }
-    public void setPrecioBase(double precioBase) {
-        this.precioBase = precioBase;
-    }
-
-
-
-
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public double getPrecioBase() { return precioBase; }
+    public void setPrecioBase(double precioBase) { this.precioBase = precioBase; }
 }

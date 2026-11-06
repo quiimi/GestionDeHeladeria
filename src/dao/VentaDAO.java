@@ -1,9 +1,9 @@
 package dao;
 
-import modelo.Cajero;
 import modelo.Catering;
 import modelo.Pedido;
 import modelo.PedidoDelivery;
+import modelo.PedidoLocal;
 
 import java.sql.*;
 
@@ -21,8 +21,8 @@ public class VentaDAO {
             stmt.setDouble(4, pedido.calcularMontoTotal());
             stmt.setString(5, pedido.getTipoPedido());
 
-            if (pedido instanceof Cajero.PedidoLocal) {
-                stmt.setInt(6, ((Cajero.PedidoLocal) pedido).getNumeroMesa());
+            if (pedido instanceof PedidoLocal) {
+                stmt.setInt(6, ((PedidoLocal) pedido).getNumeroMesa());
                 stmt.setNull(7, Types.VARCHAR);
             } else if (pedido instanceof PedidoDelivery) {
                 stmt.setNull(6, Types.INTEGER);
@@ -40,7 +40,7 @@ public class VentaDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en VentaDAO.registrarPedido - " + e.getMessage());
+            System.err.println("ERROR: Fallo en dao.VentaDAO.registrarPedido - " + e.getMessage());
         }
         return false;
     }
@@ -69,7 +69,7 @@ public class VentaDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en VentaDAO.registrarCatering - " + e.getMessage());
+            System.err.println("ERROR: Fallo en dao.VentaDAO.registrarCatering - " + e.getMessage());
         }
         return false;
     }
