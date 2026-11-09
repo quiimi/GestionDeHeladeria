@@ -1,4 +1,5 @@
 package dao;
+
 import modelo.Cajero;
 import modelo.Cliente;
 import modelo.Duenio;
@@ -10,71 +11,53 @@ import java.util.List;
 public class PersonaDAO {
 
     public boolean guardarPersona(Persona persona) {
-        String sql = "INSERT INTO personas (dni, nombre, tipo, username, puntos_fidelidad) VALUES (?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), username = VALUES(username), puntos_fidelidad = VALUES(puntos_fidelidad)";
+        String sql = "INSERT INTO personas (dni, nombre, tipo, username, puntos_fidelidad, activo) "
+                + "VALUES (?, ?, ?, ?, ?, 1) "
+                + "ON DUPLICATE KEY UPDATE "
+                + "nombre = VALUES(nombre), "
+                + "tipo = VALUES(tipo), "
+                + "username = VALUES(username), "
+                + "puntos_fidelidad = VALUES(puntos_fidelidad), "
+                + "activo = 1";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
             stmt.setString(1, persona.getDni());
             stmt.setString(2, persona.getNombre());
-
-            if (persona instanceof Cliente) {
-                stmt.setString(3, "CLIENTE");
-                stmt.setNull(4, Types.VARCHAR);
-                stmt.setInt(5, ((Cliente) persona).getPuntosFidelidad());
-            } else if (persona instanceof Cajero) {
-                stmt.setString(3, "CAJERO");
-                stmt.setString(4, ((Cajero) persona).getUsername());
-                stmt.setInt(5, 0);
-            } else if (persona instanceof Duenio) {
-                stmt.setString(3, "DUENO");
-                stmt.setString(4, ((Duenio) persona).getUsername());
-                stmt.setInt(5, 0);
-            }
+            stmt.setString(3, (persona instanceof Duenio) ? "DUENIO" : (persona instanceof Cajero) ? "CAJERO" : "CLIENTE");
+            stmt.setString(4, (persona instanceof Cajero) ? ((Cajero) persona).getUsername() : null);
+            stmt.setInt(5, (persona instanceof Cliente) ? ((Cliente) persona).getPuntosFidelidad() : 0);
 
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en PersonaDAO.guardarPersona - " + e.getMessage());
+            System.err.println("ERROR en PersonaDAO.guardarPersona: " + e.getMessage());
             return false;
         }
     }
 
-    public Persona buscarPorDni(String dni) {
-        String sql = "SELECT * FROM personas WHERE dni = ?";
+    public boolean actualizarPuntosCliente(Cliente cliente) {
+        String sql = "UPDATE personas SET puntos_fidelidad = ? WHERE dni = ?";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
-            stmt.setString(1, dni);
+            stmt.setInt(1, cliente.getPuntosFidelidad());
+            stmt.setString(2, cliente.getDni());
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String nombre = rs.getString("nombre");
-                    String tipo = rs.getString("tipo");
+            return stmt.executeUpdate() > 0;
 
-                    switch (tipo) {
-                        case "CLIENTE":
-                            Cliente cliente = new Cliente(dni, nombre);
-                            cliente.sumarPuntos(rs.getInt("puntos_fidelidad"));
-                            return cliente;
-                        case "CAJERO":
-                            return new Cajero(dni, nombre, rs.getString("username"));
-                        case "DUENO":
-                            return new Duenio(dni, nombre, rs.getString("username"));
-                    }
-                }
-            }
         } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en PersonaDAO.buscarPorDni - " + e.getMessage());
+            System.err.println("ERROR: Fallo en PersonaDAO.actualizarPuntosCliente - " + e.getMessage());
+            return false;
         }
-        return null;
     }
 
     public List<Cliente> listarClientes() {
         List<Cliente> clientes = new ArrayList<>();
-        String sql = "SELECT * FROM personas WHERE tipo = 'CLIENTE'";
+        // Consulta exclusiva para registros de tipo CLIENTE
+        String sql = "SELECT * FROM personas WHERE tipo = 'CLIENTE' AND activo = 1";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql);
@@ -89,5 +72,74 @@ public class PersonaDAO {
             System.err.println("ERROR: Fallo en PersonaDAO.listarClientes - " + e.getMessage());
         }
         return clientes;
+    }
+
+    public Persona buscarPorDni(String dni) {
+        String sql = "SELECT * FROM personas WHERE dni = ?";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, dni);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String tipo = rs.getString("tipo");
+                    if ("CLIENTE".equalsIgnoreCase(tipo)) {
+                        Cliente c = new Cliente(rs.getString("dni"), rs.getString("nombre"));
+                        c.sumarPuntos(rs.getInt("puntos_fidelidad"));
+                        return c;
+                    } else if ("CAJERO".equalsIgnoreCase(tipo)) {
+                        return new Cajero(rs.getString("dni"), rs.getString("nombre"), rs.getString("username"));
+                    } else if ("DUENIO".equalsIgnoreCase(tipo) || "DUENO".equalsIgnoreCase(tipo)) {
+                        return new Duenio(rs.getString("dni"), rs.getString("nombre"), rs.getString("username"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("ERROR: Fallo en PersonaDAO.buscarPorDni - " + e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean eliminarPersonaPorDni(String dni) {
+        String sql = "DELETE FROM personas WHERE dni = ?";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, dni);
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            if (e.getErrorCode() == 1451) {
+                System.out.println("ERROR: No se puede eliminar la persona porque posee ventas o pedidos asociados.");
+            } else {
+                System.err.println("ERROR en PersonaDAO.eliminarPersonaPorDni: " + e.getMessage());
+            }
+            return false;
+        }
+    }
+
+    public List<Cajero> listarEmpleados() {
+        List<Cajero> empleados = new ArrayList<>();
+        // Consulta exclusiva para registros de tipo CAJERO
+        String sql = "SELECT * FROM personas WHERE tipo = 'CAJERO' AND activo = 1";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Cajero c = new Cajero(
+                        rs.getString("dni"),
+                        rs.getString("nombre"),
+                        rs.getString("username")
+                );
+                empleados.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("ERROR: Fallo en PersonaDAO.listarEmpleados - " + e.getMessage());
+        }
+        return empleados;
     }
 }

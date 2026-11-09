@@ -1,5 +1,7 @@
 package modelo;
 
+import excepciones.DistanciaEntregaExcedidaException;
+
 public class PedidoDelivery extends Pedido{
     private String direccionEntrega;
     private double distanciaKm;

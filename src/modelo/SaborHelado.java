@@ -19,16 +19,16 @@ public class SaborHelado {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-    public boolean isEsSinTacc() {
+    public boolean isSinTacc() {
         return esSinTacc;
     }
-    public void setEsSinTacc(boolean esSinTacc) {
+    public void setSinTacc(boolean esSinTacc) {
         this.esSinTacc = esSinTacc;
     }
-    public boolean isEsVegano() {
+    public boolean isVegano() {
         return esVegano;
     }
-    public void setEsVegano(boolean esVegano) {
+    public void setVegano(boolean esVegano) {
         this.esVegano = esVegano;
     }
 
