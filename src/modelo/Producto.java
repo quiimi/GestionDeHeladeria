@@ -1,6 +1,6 @@
 package modelo;
 
-public abstract class Producto {
+public abstract class Producto  {
     protected int id;
     protected String nombre;
     protected double precioBase;
