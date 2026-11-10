@@ -21,12 +21,7 @@ public class Main {
         int opcionAcceso = 0;
 
         do {
-            System.out.println("\n==========================================");
-            System.out.println("--- SISTEMA DE GESTION DE HELADERIA ---");
-            System.out.println("==========================================");
-            System.out.println("1. Ingresar como DUEÑO (Administracion)");
-            System.out.println("2. Ingresar como CAJERO (Operacion)");
-            System.out.println("3. Salir del Sistema");
+            mostrarMenuAcceso();
 
             opcionAcceso = Menu.leerEntero(teclado, "Seleccione su tipo de acceso: ");
 
@@ -57,7 +52,9 @@ public class Main {
     }
 
     private static void registrarPrimerDuenio(Scanner teclado, HeladeriaSystem sistema) {
-        System.out.println("\n=== CONFIGURACION INICIAL ===");
+        System.out.println("\n============================================================");
+        System.out.println("                  CONFIGURACION INICIAL");
+        System.out.println("============================================================");
         System.out.println("No hay un dueño registrado. Cargue sus datos para continuar.");
 
         boolean registrado = false;
@@ -86,15 +83,7 @@ public class Main {
         int opcion = 0;
 
         do {
-            System.out.println("1. Registrar Nuevo Cajero / Empleado");
-            System.out.println("2. Eliminar Cajero / Empleado");
-            System.out.println("3. Listar Empleados");
-            System.out.println("4. Dar de Alta Nuevo Sabor / Bacha");
-            System.out.println("5. Recargar Bacha de Helado");
-            System.out.println("6. Ver Estado General de Bachas");
-            System.out.println("7. Gestionar / Actualizar Precios");
-            System.out.println("8. Ver Historial de Ventas");
-            System.out.println("9. Volver al Menu Principal");
+            mostrarMenuDuenio();
 
             opcion = Menu.leerEntero(teclado, "Ingrese una opcion: ");
 
@@ -123,7 +112,9 @@ public class Main {
                     break;
 
                 case 3:
-                    System.out.println("\n--- LISTADO DE EMPLEADOS ---");
+                    System.out.println("\n------------------------------------------------------------");
+                    System.out.println("                    EMPLEADOS REGISTRADOS");
+                    System.out.println("------------------------------------------------------------");
                     List<Cajero> empleados = sistema.obtenerListaEmpleados();
                     if (empleados.isEmpty()) {
                         System.out.println("No hay empleados registrados.");
@@ -148,7 +139,9 @@ public class Main {
                     break;
 
                 case 5:
-                    System.out.println("\n--- SABORES EN MOSTRADOR PARA RECARGAR ---");
+                    System.out.println("\n------------------------------------------------------------");
+                    System.out.println("                  SABORES DISPONIBLES");
+                    System.out.println("------------------------------------------------------------");
                     if (sistema.getMostradorBachas().isEmpty()) {
                         System.out.println("No hay sabores ingresados en el sistema.");
                         break;
@@ -190,7 +183,9 @@ public class Main {
                     break;
 
                 case 6:
-                    System.out.println("\n--- ESTADO DE BACHAS EN MOSTRADOR ---");
+                    System.out.println("\n------------------------------------------------------------");
+                    System.out.println("                   ESTADO DE LAS BACHAS");
+                    System.out.println("------------------------------------------------------------");
                     for (String clave : sistema.getMostradorBachas().keySet()) {
                         Bacha<SaborHelado> b = sistema.getMostradorBachas().get(clave);
                         System.out.println("Sabor: " + b.getSabor().getNombre()
@@ -216,11 +211,14 @@ public class Main {
                     break;
             }
 
+            System.out.println();
         } while (opcion != 9);
     }
 
     private static void gestionarPrecios(Scanner teclado, HeladeriaSystem sistema) {
-        System.out.println("\n--- LISTADO DE PRECIOS ACTUALES ---");
+        System.out.println("\n------------------------------------------------------------");
+        System.out.println("                    PRECIOS ACTUALES");
+        System.out.println("------------------------------------------------------------");
         Map<String, Double> precios = sistema.getPreciosMap();
         List<String> claves = new ArrayList<>(precios.keySet());
 
@@ -259,16 +257,7 @@ public class Main {
         int opcion = 0;
 
         do {
-            System.out.println("\n--- MENU DE OPERACION (CAJERO: " + sistema.getCajeroActivo().getNombre() + ") ---");
-            System.out.println("1. Seleccionar / Cambiar Cajero Activo");
-            System.out.println("2. Abrir Caja");
-            System.out.println("3. Cerrar Caja (Resumen y Registro de Ventas)");
-            System.out.println("4. Registrar Cliente");
-            System.out.println("5. Listar Clientes");
-            System.out.println("6. Tomar Pedido Local");
-            System.out.println("7. Tomar Pedido Delivery");
-            System.out.println("8. Reservar Catering para Evento");
-            System.out.println("9. Volver al Menu Principal");
+            mostrarMenuCajero(sistema.getCajeroActivo().getNombre());
 
             opcion = Menu.leerEntero(teclado, "Ingrese una opcion: ");
 
@@ -305,7 +294,9 @@ public class Main {
                     break;
 
                 case 5:
-                    System.out.println("\n--- LISTADO DE CLIENTES REGISTRADOS ---");
+                    System.out.println("\n------------------------------------------------------------");
+                    System.out.println("                   CLIENTES REGISTRADOS");
+                    System.out.println("------------------------------------------------------------");
                     List<Cliente> clientes = sistema.obtenerListaClientes();
                     if (clientes.isEmpty()) {
                         System.out.println("No hay clientes registrados.");
@@ -450,6 +441,77 @@ public class Main {
                     break;
             }
 
+            System.out.println();
         } while (opcion != 9);
     }
+
+    // ------------------------------------------------------------
+    // METODOS DE PRESENTACION DE MENUS
+    // ------------------------------------------------------------
+
+    private static void mostrarMenuAcceso() {
+        System.out.println("\n");
+        System.out.println("============================================================");
+        System.out.println("                  HELADERIA - SISTEMA DE GESTION");
+        System.out.println("============================================================");
+        System.out.println();
+        System.out.println("  ACCESO AL SISTEMA");
+        System.out.println("  ----------------------------------------------------------");
+        System.out.println("    [1]  Ingresar como DUENO       - Administracion");
+        System.out.println("    [2]  Ingresar como CAJERO      - Operacion");
+        System.out.println();
+        System.out.println("    [3]  Salir del sistema");
+        System.out.println("  ----------------------------------------------------------");
+    }
+
+    private static void mostrarMenuDuenio() {
+        System.out.println("\n");
+        System.out.println("============================================================");
+        System.out.println("                    PANEL DE ADMINISTRACION");
+        System.out.println("============================================================");
+
+        System.out.println("\n  GESTION DE PERSONAL");
+        System.out.println("    [1]  Registrar nuevo cajero / empleado");
+        System.out.println("    [2]  Dar de baja cajero / empleado");
+        System.out.println("    [3]  Listar empleados");
+
+        System.out.println("\n  GESTION DE HELADOS");
+        System.out.println("    [4]  Dar de alta nuevo sabor / bacha");
+        System.out.println("    [5]  Recargar bacha de helado");
+        System.out.println("    [6]  Ver estado general de bachas");
+
+        System.out.println("\n  ADMINISTRACION");
+        System.out.println("    [7]  Gestionar / actualizar precios");
+        System.out.println("    [8]  Consultar historial de ventas");
+
+        System.out.println("\n    [9]  Volver al menu principal");
+        System.out.println("------------------------------------------------------------");
+    }
+
+    private static void mostrarMenuCajero(String nombreCajero) {
+        System.out.println("\n");
+        System.out.println("============================================================");
+        System.out.println("                       PANEL DE CAJA");
+        System.out.println("============================================================");
+        System.out.println("  Cajero activo: " + nombreCajero);
+        System.out.println("------------------------------------------------------------");
+
+        System.out.println("\n  CAJA");
+        System.out.println("    [1]  Seleccionar / cambiar cajero activo");
+        System.out.println("    [2]  Abrir caja");
+        System.out.println("    [3]  Cerrar caja y ver resumen");
+
+        System.out.println("\n  CLIENTES");
+        System.out.println("    [4]  Registrar cliente");
+        System.out.println("    [5]  Listar clientes");
+
+        System.out.println("\n  PEDIDOS Y RESERVAS");
+        System.out.println("    [6]  Tomar pedido local");
+        System.out.println("    [7]  Tomar pedido delivery");
+        System.out.println("    [8]  Reservar catering para evento");
+
+        System.out.println("\n    [9]  Volver al menu principal");
+        System.out.println("------------------------------------------------------------");
+    }
 }
+

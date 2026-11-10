@@ -21,6 +21,7 @@ public class HeladeriaSystem {
     private Map<String, Cajero> cajerosMap;
     private Map<String, Bacha<SaborHelado>> mostradorBachas;
     private Map<String, Double> preciosMap;
+    private Map<TipoPostre, Integer> stockPostres;
 
     private Cajero cajeroActivo;
     private Duenio duenioActual;
@@ -35,6 +36,7 @@ public class HeladeriaSystem {
         this.cajerosMap = new HashMap<>();
         this.mostradorBachas = new HashMap<>();
         this.preciosMap = new HashMap<>();
+        this.stockPostres = new HashMap<>();
 
         DatabaseInitializer.inicializarBaseDeDatos();
         cargarDatosDesdeBD();
@@ -53,6 +55,7 @@ public class HeladeriaSystem {
 
         this.mostradorBachas = productoDAO.obtenerTodasLasBachas();
         this.preciosMap = precioDAO.obtenerTodosLosPrecios();
+        this.stockPostres = productoDAO.obtenerStockPostres();
     }
 
     public double getPrecio(String concepto) {
@@ -207,7 +210,9 @@ public class HeladeriaSystem {
         if (cajeroActivo == null || !cajeroActivo.isCajaAbierta()) {
             throw new IllegalStateException("ERROR: La caja debe estar abierta para registrar pedidos.");
         }
-
+        if (!validarStockPostres(productos)) {
+            return false;
+        }
         cajeroActivo.tomarPedido(new ArrayList<>(consumoKilosPorSabor.keySet()));
 
         for (Map.Entry<SaborHelado, Double> entrada : consumoKilosPorSabor.entrySet()) {
@@ -227,9 +232,16 @@ public class HeladeriaSystem {
         }
 
         boolean exito = ventaDAO.registrarPedido(pedido);
+
         if (exito) {
+            if (!descontarStockPostres(productos)) {
+                System.out.println("ERROR: No se pudo actualizar el stock de los postres.");
+                return false;
+            }
+
             double total = pedido.calcularMontoTotal();
             cajeroActivo.registrarVenta(total, "LOCAL");
+
             if (cliente != null) {
                 cliente.sumarPuntos(PUNTOS_POR_COMPRA);
                 personaDAO.actualizarPuntosCliente(cliente);
@@ -248,7 +260,9 @@ public class HeladeriaSystem {
         if (distanciaKm > 15.0) {
             throw new DistanciaEntregaExcedidaException("ERROR: La distancia de entrega (" + distanciaKm + " km) supera el limite maximo permitido (15 km).");
         }
-
+        if (!validarStockPostres(productos)) {
+            return false;
+        }
         cajeroActivo.tomarPedido(new ArrayList<>(consumoKilosPorSabor.keySet()));
 
         for (Map.Entry<SaborHelado, Double> entrada : consumoKilosPorSabor.entrySet()) {
@@ -268,9 +282,16 @@ public class HeladeriaSystem {
         }
 
         boolean exito = ventaDAO.registrarPedido(pedido);
+
         if (exito) {
+            if (!descontarStockPostres(productos)) {
+                System.out.println("ERROR: No se pudo actualizar el stock de los postres.");
+                return false;
+            }
+
             double total = pedido.calcularMontoTotal();
             cajeroActivo.registrarVenta(total, "DELIVERY");
+
             if (cliente != null) {
                 cliente.sumarPuntos(PUNTOS_POR_COMPRA);
                 personaDAO.actualizarPuntosCliente(cliente);
@@ -367,6 +388,67 @@ public class HeladeriaSystem {
         System.out.println("-----------------------------------------");
         System.out.println("Cantidad de operaciones: " + historial.size());
         System.out.println("=========================================");
+    }
+
+
+    public int getStockPostre(TipoPostre tipo) {
+        return stockPostres.getOrDefault(tipo, 0);
+    }
+
+    private boolean validarStockPostres(List<Producto> productos) {
+        Map<TipoPostre, Integer> cantidades = new HashMap<>();
+
+        for (Producto producto : productos) {
+            if (producto instanceof PostreHelado) {
+                PostreHelado postre = (PostreHelado) producto;
+
+                cantidades.put(
+                        postre.getTipoPostre(),
+                        cantidades.getOrDefault(postre.getTipoPostre(), 0) + 1
+                );
+            }
+        }
+
+        for (Map.Entry<TipoPostre, Integer> entrada : cantidades.entrySet()) {
+            int disponible = getStockPostre(entrada.getKey());
+
+            if (disponible < entrada.getValue()) {
+                System.out.println("ERROR: Stock insuficiente de "
+                        + entrada.getKey()
+                        + ". Disponible: " + disponible);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean descontarStockPostres(List<Producto> productos) {
+        Map<TipoPostre, Integer> cantidades = new HashMap<>();
+
+        for (Producto producto : productos) {
+            if (producto instanceof PostreHelado) {
+                PostreHelado postre = (PostreHelado) producto;
+
+                cantidades.put(
+                        postre.getTipoPostre(),
+                        cantidades.getOrDefault(postre.getTipoPostre(), 0) + 1
+                );
+            }
+        }
+
+        for (Map.Entry<TipoPostre, Integer> entrada : cantidades.entrySet()) {
+            TipoPostre tipo = entrada.getKey();
+            int cantidad = entrada.getValue();
+
+            if (!productoDAO.descontarStockPostre(tipo, cantidad)) {
+                return false;
+            }
+
+            stockPostres.put(tipo, getStockPostre(tipo) - cantidad);
+        }
+
+        return true;
     }
 
 

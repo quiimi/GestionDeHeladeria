@@ -94,4 +94,66 @@ public class ProductoDAO {
 
         return bachas;
     }
+
+    public Map<modelo.TipoPostre, Integer> obtenerStockPostres() {
+        Map<modelo.TipoPostre, Integer> stockPostres = new HashMap<>();
+
+        String sql = "SELECT tipo_postre, stock FROM stock_postres";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                modelo.TipoPostre tipo = modelo.TipoPostre.valueOf(
+                        rs.getString("tipo_postre")
+                );
+
+                stockPostres.put(tipo, rs.getInt("stock"));
+            }
+
+        } catch (SQLException e) {
+            System.err.println("ERROR al obtener stock de postres: " + e.getMessage());
+        }
+
+        return stockPostres;
+    }
+
+    public boolean descontarStockPostre(modelo.TipoPostre tipo, int cantidad) {
+        String sql = "UPDATE stock_postres "
+                + "SET stock = stock - ? "
+                + "WHERE tipo_postre = ? AND stock >= ?";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setInt(1, cantidad);
+            stmt.setString(2, tipo.name());
+            stmt.setInt(3, cantidad);
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("ERROR al descontar stock de postre: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean reponerStockPostre(modelo.TipoPostre tipo, int cantidad) {
+        String sql = "UPDATE stock_postres SET stock = stock + ? WHERE tipo_postre = ?";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setInt(1, cantidad);
+            stmt.setString(2, tipo.name());
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("ERROR al reponer stock de postre: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

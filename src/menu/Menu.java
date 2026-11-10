@@ -184,27 +184,62 @@ public class Menu {
             System.out.println("Precio total del pote: $" + pote.calcularPrecio());
 
         } else if (tipoProd == 3) {
+
             System.out.println("\n--- TIPOS DE POSTRE DISPONIBLES ---");
+
             TipoPostre[] opcionesPostre = TipoPostre.values();
+
             for (int i = 0; i < opcionesPostre.length; i++) {
-                System.out.println((i + 1) + ". " + opcionesPostre[i]);
+                TipoPostre tipo = opcionesPostre[i];
+                int stock = sistema.getStockPostre(tipo);
+
+                System.out.println((i + 1) + ". " + tipo
+                        + " | Stock: " + stock + " unidades");
             }
 
             int selPostre = 0;
+
             do {
-                selPostre = leerEntero(teclado, "Seleccione una opcion de postre (1 a " + opcionesPostre.length + "): ");
+                selPostre = leerEntero(
+                        teclado,
+                        "Seleccione una opcion de postre (1 a "
+                                + opcionesPostre.length + "): "
+                );
+
                 if (selPostre < 1 || selPostre > opcionesPostre.length) {
                     System.out.println("ERROR: Seleccion fuera de rango.");
+                } else {
+                    TipoPostre seleccionado = opcionesPostre[selPostre - 1];
+
+                    if (sistema.getStockPostre(seleccionado) <= 0) {
+                        System.out.println("ERROR: No hay stock disponible de "
+                                + seleccionado + ".");
+                        selPostre = 0;
+                    }
                 }
+
             } while (selPostre < 1 || selPostre > opcionesPostre.length);
 
             TipoPostre postreElegido = opcionesPostre[selPostre - 1];
-            double precioPostre = sistema.getPrecio("POSTRE_" + postreElegido.name());
-            System.out.println("Precio asignado para " + postreElegido + ": $" + precioPostre);
 
-            productos.add(new PostreHelado(3, postreElegido.name(), precioPostre, postreElegido));
+            double precioPostre = sistema.getPrecio(
+                    "POSTRE_" + postreElegido.name()
+            );
+
+            int stockDisponible = sistema.getStockPostre(postreElegido);
+
+            System.out.println("Precio asignado para "
+                    + postreElegido + ": $" + precioPostre);
+
+            productos.add(new PostreHelado(
+                    3,
+                    postreElegido.name(),
+                    precioPostre,
+                    postreElegido,
+                    stockDisponible
+            ));
         }
-
         return consumo;
     }
 }
+

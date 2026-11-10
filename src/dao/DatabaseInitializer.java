@@ -58,6 +58,11 @@ public class DatabaseInitializer {
                 + "FOREIGN KEY (cajero_dni) REFERENCES personas(dni)"
                 + ");";
 
+        String sqlStockPostres = "CREATE TABLE IF NOT EXISTS stock_postres ("
+                + "tipo_postre VARCHAR(50) PRIMARY KEY, "
+                + "stock INT NOT NULL DEFAULT 10"
+                + ");";
+
         try (Connection con = ConeccionDB.obtenerConexion();
              Statement stmt = con.createStatement()) {
 
@@ -67,6 +72,7 @@ public class DatabaseInitializer {
             stmt.executeUpdate(sqlPrecios);
             stmt.executeUpdate(sqlPedidos);
             stmt.executeUpdate(sqlReservasCatering);
+            stmt.executeUpdate(sqlStockPostres);
 
             // 2. Personas iniciales (el dueño NO se carga acá: se registra la primera vez desde Main)
             if (tablaVacia(stmt, "personas")) {
@@ -95,6 +101,16 @@ public class DatabaseInitializer {
                 stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_BOMBON_SUIZO', 8500.0)");
                 stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_TORTA_HELADA', 10000.0)");
                 stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_ALFATOR', 6000.0)");
+            }
+
+            // Stock inicial de postres
+            if (tablaVacia(stmt, "stock_postres")) {
+                for (modelo.TipoPostre tipo : modelo.TipoPostre.values()) {
+                    stmt.executeUpdate(
+                            "INSERT INTO stock_postres (tipo_postre, stock) VALUES ('"
+                                    + tipo.name() + "', 10)"
+                    );
+                }
             }
 
         } catch (SQLException e) {
