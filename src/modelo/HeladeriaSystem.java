@@ -271,11 +271,26 @@ public class HeladeriaSystem {
         return duenioActual;
     }
 
-    public void setDuenioActual(Duenio duenio) {
-        this.duenioActual = duenio;
-        if (personaDAO.buscarPorDni(duenio.getDni()) == null) {
-            personaDAO.guardarPersona(duenio);
+    public boolean hayDuenioRegistrado() {
+        if (duenioActual == null) {
+            duenioActual = personaDAO.buscarDuenio();
         }
+        return duenioActual != null;
+    }
+
+    public boolean registrarDuenio(String dni, String nombre, String username) {
+        if (dni.isEmpty() || nombre.isEmpty() || username.isEmpty()) {
+            throw new IllegalArgumentException("ERROR: Todos los campos son obligatorios.");
+        }
+        if (personaDAO.buscarPorDni(dni) != null) {
+            throw new IllegalArgumentException("ERROR: Ya existe una persona registrada con el DNI " + dni + ".");
+        }
+        Duenio nuevo = new Duenio(dni, nombre, username);
+        if (personaDAO.guardarPersona(nuevo)) {
+            this.duenioActual = nuevo;
+            return true;
+        }
+        return false;
     }
 
     public Map<String, Bacha<SaborHelado>> getMostradorBachas() {

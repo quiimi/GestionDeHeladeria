@@ -14,8 +14,9 @@ public class Main {
         Scanner teclado = new Scanner(System.in);
         HeladeriaSystem sistema = new HeladeriaSystem();
 
-        Duenio duenioInicial = new Duenio("23432543", "Administrador Duenio", "admin");
-        sistema.setDuenioActual(duenioInicial);
+        if (!sistema.hayDuenioRegistrado()) {
+            registrarPrimerDuenio(teclado, sistema);
+        }
 
         int opcionAcceso = 0;
 
@@ -31,7 +32,13 @@ public class Main {
 
             switch (opcionAcceso) {
                 case 1:
-                    menuDuenio(teclado, sistema);
+                    System.out.print("Ingrese su DNI de dueño: ");
+                    String dniDuenio = teclado.nextLine().trim();
+                    if (sistema.getDuenioActual().getDni().equals(dniDuenio)) {
+                        menuDuenio(teclado, sistema);
+                    } else {
+                        System.out.println("ERROR: DNI de dueño incorrecto.");
+                    }
                     break;
                 case 2:
                     menuCajero(teclado, sistema);
@@ -47,6 +54,32 @@ public class Main {
         } while (opcionAcceso != 3);
 
         teclado.close();
+    }
+
+    private static void registrarPrimerDuenio(Scanner teclado, HeladeriaSystem sistema) {
+        System.out.println("\n=== CONFIGURACION INICIAL ===");
+        System.out.println("No hay un dueño registrado. Cargue sus datos para continuar.");
+
+        boolean registrado = false;
+        do {
+            System.out.print("DNI: ");
+            String dni = teclado.nextLine().trim();
+            System.out.print("Nombre completo: ");
+            String nombre = teclado.nextLine().trim();
+            System.out.print("Username: ");
+            String username = teclado.nextLine().trim();
+
+            try {
+                registrado = sistema.registrarDuenio(dni, nombre, username);
+                if (!registrado) {
+                    System.out.println("ERROR: No se pudo guardar el dueño. Reintente.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        } while (!registrado);
+
+        System.out.println("Dueño registrado correctamente.");
     }
 
     private static void menuDuenio(Scanner teclado, HeladeriaSystem sistema) {

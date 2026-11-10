@@ -1,9 +1,7 @@
 package dao;
 
-import modelo.Cajero;
-import modelo.Cliente;
-import modelo.Duenio;
-import modelo.Persona;
+import modelo.*;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +24,7 @@ public class PersonaDAO {
             stmt.setString(1, persona.getDni());
             stmt.setString(2, persona.getNombre());
             stmt.setString(3, (persona instanceof Duenio) ? "DUENIO" : (persona instanceof Cajero) ? "CAJERO" : "CLIENTE");
-            stmt.setString(4, (persona instanceof Cajero) ? ((Cajero) persona).getUsername() : null);
+            stmt.setString(4, (persona instanceof Usuario) ? ((Usuario) persona).getUsername() : null);
             stmt.setInt(5, (persona instanceof Cliente) ? ((Cliente) persona).getPuntosFidelidad() : 0);
 
             return stmt.executeUpdate() > 0;
@@ -102,7 +100,7 @@ public class PersonaDAO {
     }
 
     public boolean eliminarPersonaPorDni(String dni) {
-        String sql = "DELETE FROM personas WHERE dni = ?";
+        String sql = "DELETE FROM personas WHERE dni = ? AND tipo = 'CAJERO'";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -141,5 +139,18 @@ public class PersonaDAO {
             System.err.println("ERROR: Fallo en PersonaDAO.listarEmpleados - " + e.getMessage());
         }
         return empleados;
+    }
+    public Duenio buscarDuenio() {
+        String sql = "SELECT * FROM personas WHERE tipo IN ('DUENIO', 'DUENO') ORDER BY dni LIMIT 1";
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return new Duenio(rs.getString("dni"), rs.getString("nombre"), rs.getString("username"));
+            }
+        } catch (SQLException e) {
+            System.err.println("ERROR: Fallo en PersonaDAO.buscarDuenio - " + e.getMessage());
+        }
+        return null;
     }
 }

@@ -14,7 +14,7 @@ public class ConoHelado extends Producto {
 
     @Override
     public double calcularPrecio() {
-        return precioBase + (cantBochas * 500.0);
+        return precioBase * cantBochas;
     }
 
     public int getCantBochas() { return cantBochas; }

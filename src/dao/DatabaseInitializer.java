@@ -1,17 +1,11 @@
 package dao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseInitializer {
-
-    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://localhost:3306/heladeria_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true";
-    private static final String USER = "root";
-    private static final String PASS = "1234";
 
     public static void inicializarBaseDeDatos() {
         String sqlPersonas = "CREATE TABLE IF NOT EXISTS personas ("
@@ -36,56 +30,77 @@ public class DatabaseInitializer {
                 + "precio DOUBLE NOT NULL"
                 + ");";
 
-        try {
-            Class.forName(DRIVER);
-            try (Connection con = DriverManager.getConnection(URL, USER, PASS);
-                 Statement stmt = con.createStatement()) {
+        String sqlPedidos = "CREATE TABLE IF NOT EXISTS pedidos ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "cliente_dni VARCHAR(20), "
+                + "cajero_dni VARCHAR(20) NOT NULL, "
+                + "fecha_hora DATETIME NOT NULL, "
+                + "monto_total DOUBLE NOT NULL, "
+                + "tipo_pedido VARCHAR(20) NOT NULL, "
+                + "numero_mesa INT, "
+                + "direccion VARCHAR(150), "
+                + "FOREIGN KEY (cliente_dni) REFERENCES personas(dni), "
+                + "FOREIGN KEY (cajero_dni) REFERENCES personas(dni)"
+                + ");";
 
-                // 1. Crear las tablas
-                stmt.executeUpdate(sqlPersonas);
-                stmt.executeUpdate(sqlSabores);
-                stmt.executeUpdate(sqlPrecios);
+        String sqlReservasCatering = "CREATE TABLE IF NOT EXISTS reservas_catering ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "cliente_dni VARCHAR(20) NOT NULL, "
+                + "fecha_evento DATETIME NOT NULL, "
+                + "cant_personas INT NOT NULL, "
+                + "monto_senia DOUBLE NOT NULL, "
+                + "monto_total DOUBLE NOT NULL, "
+                + "estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADA', "
+                + "FOREIGN KEY (cliente_dni) REFERENCES personas(dni)"
+                + ");";
 
-                // 2. Insertar personas iniciales si la tabla está vacía
-                ResultSet rsPersonas = stmt.executeQuery("SELECT COUNT(*) AS total FROM personas");
-                if (rsPersonas.next() && rsPersonas.getInt("total") == 0) {
-                    stmt.executeUpdate("INSERT INTO personas VALUES ('11111111', 'Carlos Duenio', 'DUENIO', 'carlos_admin', 0, 1)");
-                    stmt.executeUpdate("INSERT INTO personas VALUES ('22222222', 'Laura Cajera', 'CAJERO', 'laura_caja', 0, 1)");
-                    stmt.executeUpdate("INSERT INTO personas VALUES ('33333333', 'Pedro Cajero', 'CAJERO', 'pedro_caja', 0, 1)");
-                    stmt.executeUpdate("INSERT INTO personas VALUES ('44444444', 'Juan Perez', 'CLIENTE', NULL, 100, 1)");
-                    stmt.executeUpdate("INSERT INTO personas VALUES ('55555555', 'Maria Gomez', 'CLIENTE', NULL, 50, 1)");
-                }
+        try (Connection con = ConeccionDB.obtenerConexion();
+             Statement stmt = con.createStatement()) {
 
-                // 3. Insertar sabores iniciales si la tabla está vacía
-                ResultSet rsSabores = stmt.executeQuery("SELECT COUNT(*) AS total FROM sabores");
-                if (rsSabores.next() && rsSabores.getInt("total") == 0) {
-                    stmt.executeUpdate("INSERT INTO sabores VALUES ('dulce de leche', 1, 0, 'DISPONIBLE', 10.0)");
-                    stmt.executeUpdate("INSERT INTO sabores VALUES ('chocolate amargo', 1, 1, 'DISPONIBLE', 10.0)");
-                    stmt.executeUpdate("INSERT INTO sabores VALUES ('frutilla al agua', 1, 1, 'DISPONIBLE', 10.0)");
-                    stmt.executeUpdate("INSERT INTO sabores VALUES ('tramontana', 0, 0, 'DISPONIBLE', 10.0)");
-                    stmt.executeUpdate("INSERT INTO sabores VALUES ('vainilla', 1, 0, 'DISPONIBLE', 10.0)");
-                }
+            // 1. Crear las tablas (personas primero: pedidos y reservas_catering la referencian por FK)
+            stmt.executeUpdate(sqlPersonas);
+            stmt.executeUpdate(sqlSabores);
+            stmt.executeUpdate(sqlPrecios);
+            stmt.executeUpdate(sqlPedidos);
+            stmt.executeUpdate(sqlReservasCatering);
 
-                // 4. Insertar precios iniciales si la tabla está vacía
-                ResultSet rsPrecios = stmt.executeQuery("SELECT COUNT(*) AS total FROM precios");
-                if (rsPrecios.next() && rsPrecios.getInt("total") == 0) {
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('PRECIO_BOCHA', 1500.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('PRECIO_KILO', 12000.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('Catering', 5000.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_ALMENDRADO', 8000.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_CASSATA', 7500.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_BOMBON_SUIZO', 8500.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_TORTA_HELADA', 10000.0)");
-                    stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_ALFATOR', 6000.0)");
-                }
-
-                System.out.println("Base de datos, tablas y datos iniciales de prueba cargados correctamente.");
-
+            // 2. Personas iniciales (el dueño NO se carga acá: se registra la primera vez desde Main)
+            if (tablaVacia(stmt, "personas")) {
+                stmt.executeUpdate("INSERT INTO personas VALUES ('22222222', 'Laura Cajera', 'CAJERO', 'laura_caja', 0, 1)");
+                stmt.executeUpdate("INSERT INTO personas VALUES ('33333333', 'Pedro Cajero', 'CAJERO', 'pedro_caja', 0, 1)");
+                stmt.executeUpdate("INSERT INTO personas VALUES ('44444444', 'Juan Perez', 'CLIENTE', NULL, 100, 1)");
+                stmt.executeUpdate("INSERT INTO personas VALUES ('55555555', 'Maria Gomez', 'CLIENTE', NULL, 50, 1)");
             }
-        } catch (ClassNotFoundException e) {
-            System.err.println("ERROR: No se encontro el Driver de MySQL - " + e.getMessage());
+
+            // 3. Sabores iniciales
+            if (tablaVacia(stmt, "sabores")) {
+                stmt.executeUpdate("INSERT INTO sabores VALUES ('dulce de leche', 1, 0, 'DISPONIBLE', 10.0)");
+                stmt.executeUpdate("INSERT INTO sabores VALUES ('chocolate amargo', 1, 1, 'DISPONIBLE', 10.0)");
+                stmt.executeUpdate("INSERT INTO sabores VALUES ('frutilla al agua', 1, 1, 'DISPONIBLE', 10.0)");
+                stmt.executeUpdate("INSERT INTO sabores VALUES ('tramontana', 0, 0, 'DISPONIBLE', 10.0)");
+                stmt.executeUpdate("INSERT INTO sabores VALUES ('vainilla', 1, 0, 'DISPONIBLE', 10.0)");
+            }
+
+            // 4. Precios iniciales
+            if (tablaVacia(stmt, "precios")) {
+                stmt.executeUpdate("INSERT INTO precios VALUES ('PRECIO_BOCHA', 1500.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('PRECIO_KILO', 12000.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('Catering', 5000.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_ALMENDRADO', 8000.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_CASSATA', 7500.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_BOMBON_SUIZO', 8500.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_TORTA_HELADA', 10000.0)");
+                stmt.executeUpdate("INSERT INTO precios VALUES ('POSTRE_ALFATOR', 6000.0)");
+            }
+
         } catch (SQLException e) {
             System.err.println("ERROR al inicializar las tablas y datos: " + e.getMessage());
+        }
+    }
+
+    private static boolean tablaVacia(Statement stmt, String tabla) throws SQLException {
+        try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS total FROM " + tabla)) {
+            return rs.next() && rs.getInt("total") == 0;
         }
     }
 }

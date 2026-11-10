@@ -87,12 +87,9 @@ public class Menu {
                 }
             } while (bochas < 1 || bochas > 3);
 
-            // Asignación automática de precio según constante en BD por bocha
+            // El precio por bocha viene de la BD. El total lo calcula ConoHelado.calcularPrecio()
             double precioBocha = sistema.getPrecio("PRECIO_BOCHA");
-            double precioTotalCono = bochas * precioBocha;
             double pesoPorBocha = 0.100;
-
-            System.out.println("Precio total calculado del cono: $" + precioTotalCono);
 
             for (int i = 1; i <= bochas; i++) {
                 SaborHelado saborValido = null;
@@ -119,7 +116,11 @@ public class Menu {
                 saboresSeleccionados.add(saborValido);
                 consumo.put(saborValido, consumo.getOrDefault(saborValido, 0.0) + pesoPorBocha);
             }
-            productos.add(new ConoHelado(1, "Cono Helado", precioTotalCono, bochas, saboresSeleccionados));
+
+            // precioBase = precio por bocha
+            ConoHelado cono = new ConoHelado(1, "Cono Helado", precioBocha, bochas, saboresSeleccionados);
+            productos.add(cono);
+            System.out.println("Precio total del cono: $" + cono.calcularPrecio());
 
         } else if (tipoProd == 2) {
             double kilosPote = 0;
@@ -147,12 +148,9 @@ public class Menu {
                 }
             } while (cantSabores < 1 || cantSabores > maxSabores);
 
-            // Asignación automática de precio según constante en BD por Kilo
+            // El precio por kilo viene de la BD. El total lo calcula PoteHelado.calcularPrecio()
             double precioPorKg = sistema.getPrecio("PRECIO_KILO");
-            double precioTotalPote = kilosPote * precioPorKg;
             double kgPorSabor = kilosPote / cantSabores;
-
-            System.out.println("Precio total calculado del pote: $" + precioTotalPote);
 
             for (int i = 1; i <= cantSabores; i++) {
                 SaborHelado saborValido = null;
@@ -179,7 +177,11 @@ public class Menu {
                 saboresSeleccionados.add(saborValido);
                 consumo.put(saborValido, consumo.getOrDefault(saborValido, 0.0) + kgPorSabor);
             }
-            productos.add(new PoteHelado(2, "Pote Helado", precioTotalPote, kilosPote, saboresSeleccionados));
+
+            // precioBase = precio por kilo
+            PoteHelado pote = new PoteHelado(2, "Pote Helado", precioPorKg, kilosPote, saboresSeleccionados);
+            productos.add(pote);
+            System.out.println("Precio total del pote: $" + pote.calcularPrecio());
 
         } else if (tipoProd == 3) {
             System.out.println("\n--- TIPOS DE POSTRE DISPONIBLES ---");
