@@ -39,6 +39,7 @@ public class DatabaseInitializer {
                 + "tipo_pedido VARCHAR(20) NOT NULL, "
                 + "numero_mesa INT, "
                 + "direccion VARCHAR(150), "
+                + "descripcion VARCHAR(500), "
                 + "FOREIGN KEY (cliente_dni) REFERENCES personas(dni), "
                 + "FOREIGN KEY (cajero_dni) REFERENCES personas(dni)"
                 + ");";
@@ -46,12 +47,15 @@ public class DatabaseInitializer {
         String sqlReservasCatering = "CREATE TABLE IF NOT EXISTS reservas_catering ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "cliente_dni VARCHAR(20) NOT NULL, "
+                + "cajero_dni VARCHAR(20), "
+                + "fecha_registro DATETIME, "
                 + "fecha_evento DATETIME NOT NULL, "
                 + "cant_personas INT NOT NULL, "
                 + "monto_senia DOUBLE NOT NULL, "
                 + "monto_total DOUBLE NOT NULL, "
                 + "estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADA', "
-                + "FOREIGN KEY (cliente_dni) REFERENCES personas(dni)"
+                + "FOREIGN KEY (cliente_dni) REFERENCES personas(dni), "
+                + "FOREIGN KEY (cajero_dni) REFERENCES personas(dni)"
                 + ");";
 
         try (Connection con = ConeccionDB.obtenerConexion();

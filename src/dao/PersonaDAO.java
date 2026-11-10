@@ -10,22 +10,19 @@ public class PersonaDAO {
 
     public boolean guardarPersona(Persona persona) {
         String sql = "INSERT INTO personas (dni, nombre, tipo, username, puntos_fidelidad, activo) "
-                + "VALUES (?, ?, ?, ?, ?, 1) "
-                + "ON DUPLICATE KEY UPDATE "
-                + "nombre = VALUES(nombre), "
-                + "tipo = VALUES(tipo), "
-                + "username = VALUES(username), "
-                + "puntos_fidelidad = VALUES(puntos_fidelidad), "
-                + "activo = 1";
+                + "VALUES (?, ?, ?, ?, ?, 1)";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
 
             stmt.setString(1, persona.getDni());
             stmt.setString(2, persona.getNombre());
-            stmt.setString(3, (persona instanceof Duenio) ? "DUENIO" : (persona instanceof Cajero) ? "CAJERO" : "CLIENTE");
-            stmt.setString(4, (persona instanceof Usuario) ? ((Usuario) persona).getUsername() : null);
-            stmt.setInt(5, (persona instanceof Cliente) ? ((Cliente) persona).getPuntosFidelidad() : 0);
+            stmt.setString(3, (persona instanceof Duenio) ? "DUENIO" :
+                    (persona instanceof Cajero) ? "CAJERO" : "CLIENTE");
+            stmt.setString(4, (persona instanceof Usuario) ?
+                    ((Usuario) persona).getUsername() : null);
+            stmt.setInt(5, (persona instanceof Cliente) ?
+                    ((Cliente) persona).getPuntosFidelidad() : 0);
 
             return stmt.executeUpdate() > 0;
 
@@ -99,8 +96,8 @@ public class PersonaDAO {
         return null;
     }
 
-    public boolean eliminarPersonaPorDni(String dni) {
-        String sql = "DELETE FROM personas WHERE dni = ? AND tipo = 'CAJERO'";
+    public boolean darDeBajaCajero(String dni) {
+        String sql = "UPDATE personas SET activo = 0 WHERE dni = ? AND tipo = 'CAJERO' AND activo = 1";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -109,11 +106,40 @@ public class PersonaDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            if (e.getErrorCode() == 1451) {
-                System.out.println("ERROR: No se puede eliminar la persona porque posee ventas o pedidos asociados.");
-            } else {
-                System.err.println("ERROR en PersonaDAO.eliminarPersonaPorDni: " + e.getMessage());
+            System.err.println("ERROR en PersonaDAO.darDeBajaCajero: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean reactivarCajero(String dni) {
+        String sql = "UPDATE personas SET activo = 1 "
+                + "WHERE dni = ? AND tipo = 'CAJERO' AND activo = 0";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, dni);
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.err.println("ERROR en PersonaDAO.reactivarCajero: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean estaActivo(String dni) {
+        String sql = "SELECT activo FROM personas WHERE dni = ?";
+
+        try (Connection con = ConeccionDB.obtenerConexion();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+
+            stmt.setString(1, dni);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt("activo") == 1;
             }
+
+        } catch (SQLException e) {
+            System.err.println("ERROR en PersonaDAO.estaActivo: " + e.getMessage());
             return false;
         }
     }
@@ -140,6 +166,7 @@ public class PersonaDAO {
         }
         return empleados;
     }
+
     public Duenio buscarDuenio() {
         String sql = "SELECT * FROM personas WHERE tipo IN ('DUENIO', 'DUENO') ORDER BY dni LIMIT 1";
         try (Connection con = ConeccionDB.obtenerConexion();
@@ -153,4 +180,5 @@ public class PersonaDAO {
         }
         return null;
     }
+
 }

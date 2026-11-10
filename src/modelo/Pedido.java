@@ -29,6 +29,20 @@ public abstract class Pedido {
         return total;
     }
 
+    public String generarDescripcion() {
+        StringBuilder descripcion = new StringBuilder();
+
+        for (Producto p : productos) {
+            descripcion.append(p.getNombre()).append(", ");
+        }
+
+        if (descripcion.length() > 0) {
+            descripcion.setLength(descripcion.length() - 2);
+        }
+
+        return descripcion.toString();
+    }
+
     public abstract String getTipoPedido();
 
     public int getId() { return id; }

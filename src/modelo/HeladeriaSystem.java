@@ -77,7 +77,8 @@ public class HeladeriaSystem {
             return true;
         }
         Persona p = personaDAO.buscarPorDni(dni);
-        if (p instanceof Cajero) {
+        // Un cajero dado de baja no puede iniciar sesion
+        if (p instanceof Cajero && personaDAO.estaActivo(dni)) {
             Cajero c = (Cajero) p;
             cajerosMap.put(dni, c);
             this.cajeroActivo = c;
@@ -86,27 +87,76 @@ public class HeladeriaSystem {
         return false;
     }
 
+
     public boolean registrarCajero(String dni, String nombre, String username) {
-        Cajero nuevoCajero = new Cajero(dni, nombre, username);
-        if (personaDAO.guardarPersona(nuevoCajero)) {
-            cajerosMap.put(dni, nuevoCajero); // Operacion exclusiva sobre la coleccion de cajeros
-            System.out.println("Cajero " + nombre + " (DNI: " + dni + ") registrado correctamente.");
+        Persona existente = personaDAO.buscarPorDni(dni);
+
+        // DNI nuevo: alta normal
+        if (existente == null) {
+            Cajero nuevoCajero = new Cajero(dni, nombre, username);
+
+            if (personaDAO.guardarPersona(nuevoCajero)) {
+                cajerosMap.put(dni, nuevoCajero);
+                System.out.println("Cajero " + nombre + " (DNI: " + dni + ") registrado correctamente.");
+                return true;
+            }
+            return false;
+        }
+
+        // El DNI pertenece a un cliente o al dueño
+        if (!(existente instanceof Cajero)) {
+            System.out.println("ERROR: El DNI " + dni + " ya pertenece a otra persona registrada.");
+            return false;
+        }
+
+        // Ya es cajero y está activo
+        if (personaDAO.estaActivo(dni)) {
+            System.out.println("ERROR: Ya existe un cajero activo con el DNI " + dni + ".");
+            return false;
+        }
+
+        // Era un cajero dado de baja: se reactiva conservando sus datos
+        return reactivarCajero(dni);
+    }
+
+    public Cajero buscarCajeroDadoDeBaja(String dni) {
+        Persona p = personaDAO.buscarPorDni(dni);
+        if (p instanceof Cajero && !personaDAO.estaActivo(dni)) {
+            return (Cajero) p;
+        }
+        return null;
+    }
+
+
+    public boolean reactivarCajero(String dni) {
+        Cajero cajeroOriginal = buscarCajeroDadoDeBaja(dni);
+        if (cajeroOriginal == null) {
+            System.out.println("ERROR: No existe un cajero dado de baja con el DNI " + dni + ".");
+            return false;
+        }
+
+        if (personaDAO.reactivarCajero(dni)) {
+            cajerosMap.put(dni, cajeroOriginal);
+            System.out.println("Cajero " + cajeroOriginal.getNombre()
+                    + " (DNI: " + dni + ") dado de alta nuevamente.");
             return true;
         }
+
         return false;
     }
 
     public boolean eliminarEmpleado(String dni) {
-        if (personaDAO.eliminarPersonaPorDni(dni)) {
-            cajerosMap.remove(dni); // Quita unicametne de la lista de empleados
+        if (personaDAO.darDeBajaCajero(dni)) {
+            cajerosMap.remove(dni);
 
             if (cajeroActivo != null && cajeroActivo.getDni().equals(dni)) {
                 cajeroActivo = null;
             }
 
-            System.out.println("Empleado con DNI " + dni + " eliminado del sistema.");
+            System.out.println("Cajero con DNI " + dni + " dado de baja.");
             return true;
         }
+        System.out.println("ERROR: No existe un cajero activo con el DNI " + dni + ".");
         return false;
     }
 
@@ -248,7 +298,7 @@ public class HeladeriaSystem {
 
         double total = cantPersonas * precioPorPersona;
 
-        Catering catering = new Catering(cliente, fechaEvento, cantPersonas, senia, total);
+        Catering catering = new Catering(cliente, cajeroActivo, fechaEvento, cantPersonas, senia, total);
         boolean exito = ventaDAO.registrarCatering(catering);
 
         if (exito) {
@@ -292,6 +342,33 @@ public class HeladeriaSystem {
         }
         return false;
     }
+    public boolean iniciarSesionDuenio(String dni) {
+        Persona p = personaDAO.buscarPorDni(dni);
+        if (p instanceof Duenio) {
+            this.duenioActual = (Duenio) p;
+            return true;
+        }
+        return false;
+    }
+
+    public void mostrarHistorialVentas() {
+        List<String> historial = ventaDAO.obtenerHistorialVentas();
+
+        System.out.println("\n========== HISTORIAL DE VENTAS ==========");
+
+        if (historial.isEmpty()) {
+            System.out.println("Todavía no hay ventas registradas.");
+            return;
+        }
+        for (String venta : historial) {
+            System.out.println("-----------------------------------------");
+            System.out.println(venta);
+        }
+        System.out.println("-----------------------------------------");
+        System.out.println("Cantidad de operaciones: " + historial.size());
+        System.out.println("=========================================");
+    }
+
 
     public Map<String, Bacha<SaborHelado>> getMostradorBachas() {
         return mostradorBachas;

@@ -34,10 +34,10 @@ public class Main {
                 case 1:
                     System.out.print("Ingrese su DNI de dueño: ");
                     String dniDuenio = teclado.nextLine().trim();
-                    if (sistema.getDuenioActual().getDni().equals(dniDuenio)) {
+                    if (sistema.iniciarSesionDuenio(dniDuenio)) {
                         menuDuenio(teclado, sistema);
                     } else {
-                        System.out.println("ERROR: DNI de dueño incorrecto.");
+                        System.out.println("ERROR: No existe un dueño registrado con ese DNI.");
                     }
                     break;
                 case 2:
@@ -86,7 +86,6 @@ public class Main {
         int opcion = 0;
 
         do {
-            System.out.println("\n--- MENU DE ADMINISTRACION (DUEÑO) ---");
             System.out.println("1. Registrar Nuevo Cajero / Empleado");
             System.out.println("2. Eliminar Cajero / Empleado");
             System.out.println("3. Listar Empleados");
@@ -94,7 +93,8 @@ public class Main {
             System.out.println("5. Recargar Bacha de Helado");
             System.out.println("6. Ver Estado General de Bachas");
             System.out.println("7. Gestionar / Actualizar Precios");
-            System.out.println("8. Volver al Menu Principal");
+            System.out.println("8. Ver Historial de Ventas");
+            System.out.println("9. Volver al Menu Principal");
 
             opcion = Menu.leerEntero(teclado, "Ingrese una opcion: ");
 
@@ -102,6 +102,13 @@ public class Main {
                 case 1:
                     System.out.print("Ingrese DNI del nuevo cajero: ");
                     String dni = teclado.nextLine();
+
+                    // Si era un cajero dado de baja, se reactiva con sus datos guardados
+                    if (sistema.buscarCajeroDadoDeBaja(dni) != null) {
+                        sistema.reactivarCajero(dni);
+                        break;
+                    }
+
                     System.out.print("Ingrese Nombre completo: ");
                     String nombre = teclado.nextLine();
                     System.out.print("Ingrese Username de acceso: ");
@@ -197,6 +204,10 @@ public class Main {
                     break;
 
                 case 8:
+                    sistema.mostrarHistorialVentas();
+                    break;
+
+                case 9:
                     System.out.println("Volviendo al menu principal...");
                     break;
 
@@ -205,7 +216,7 @@ public class Main {
                     break;
             }
 
-        } while (opcion != 8);
+        } while (opcion != 9);
     }
 
     private static void gestionarPrecios(Scanner teclado, HeladeriaSystem sistema) {
