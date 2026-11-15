@@ -22,6 +22,7 @@ public class DatabaseInitializer {
                 + "sin_tacc TINYINT(1) NOT NULL DEFAULT 0, "
                 + "vegano TINYINT(1) NOT NULL DEFAULT 0, "
                 + "estado VARCHAR(20) NOT NULL DEFAULT 'DISPONIBLE', "
+                + "capacidad_max_kg DOUBLE NOT NULL DEFAULT 10.0, "
                 + "stock_kg DOUBLE NOT NULL DEFAULT 10.0"
                 + ");";
 
@@ -69,6 +70,16 @@ public class DatabaseInitializer {
             // 1. Crear las tablas (personas primero: pedidos y reservas_catering la referencian por FK)
             stmt.executeUpdate(sqlPersonas);
             stmt.executeUpdate(sqlSabores);
+            try (ResultSet rs = con.getMetaData().getColumns(
+                    null, null, "sabores", "capacidad_max_kg")) {
+
+                if (!rs.next()) {
+                    stmt.executeUpdate(
+                            "ALTER TABLE sabores ADD COLUMN capacidad_max_kg "
+                                    + "DOUBLE NOT NULL DEFAULT 10.0 AFTER estado"
+                    );
+                }
+            }
             stmt.executeUpdate(sqlPrecios);
             stmt.executeUpdate(sqlPedidos);
             stmt.executeUpdate(sqlReservasCatering);
@@ -84,11 +95,31 @@ public class DatabaseInitializer {
 
             // 3. Sabores iniciales
             if (tablaVacia(stmt, "sabores")) {
-                stmt.executeUpdate("INSERT INTO sabores VALUES ('dulce de leche', 1, 0, 'DISPONIBLE', 10.0)");
-                stmt.executeUpdate("INSERT INTO sabores VALUES ('chocolate amargo', 1, 1, 'DISPONIBLE', 10.0)");
-                stmt.executeUpdate("INSERT INTO sabores VALUES ('frutilla al agua', 1, 1, 'DISPONIBLE', 10.0)");
-                stmt.executeUpdate("INSERT INTO sabores VALUES ('tramontana', 0, 0, 'DISPONIBLE', 10.0)");
-                stmt.executeUpdate("INSERT INTO sabores VALUES ('vainilla', 1, 0, 'DISPONIBLE', 10.0)");
+                stmt.executeUpdate(
+                        "INSERT INTO sabores "
+                                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                                + "VALUES ('dulce de leche', 1, 0, 'DISPONIBLE', 10.0, 10.0)"
+                );
+                stmt.executeUpdate(
+                        "INSERT INTO sabores "
+                                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                                + "VALUES ('chocolate amargo', 1, 1, 'DISPONIBLE', 10.0, 10.0)"
+                );
+                stmt.executeUpdate(
+                        "INSERT INTO sabores "
+                                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                                + "VALUES ('frutilla al agua', 1, 1, 'DISPONIBLE', 10.0, 10.0)"
+                );
+                stmt.executeUpdate(
+                        "INSERT INTO sabores "
+                                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                                + "VALUES ('tramontana', 0, 0, 'DISPONIBLE', 10.0, 10.0)"
+                );
+                stmt.executeUpdate(
+                        "INSERT INTO sabores "
+                                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                                + "VALUES ('vainilla', 1, 0, 'DISPONIBLE', 10.0, 10.0)"
+                );
             }
 
             // 4. Precios iniciales
@@ -124,3 +155,4 @@ public class DatabaseInitializer {
         }
     }
 }
+

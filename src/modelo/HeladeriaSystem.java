@@ -204,29 +204,35 @@ public class HeladeriaSystem {
         productoDAO.actualizarEstadoYStockSabor(bacha.getSabor().getNombre(), bacha.getSabor().getEstado(), bacha.getCantidadActualKg());
     }
 
-    public boolean realizarPedidoLocal(String dniCliente, int numeroMesa, List<Producto> productos, Map<SaborHelado, Double> consumoKilosPorSabor)
+    public boolean realizarPedidoLocal(
+            String dniCliente,
+            int numeroMesa,
+            List<Producto> productos,
+            Map<SaborHelado, Double> consumoKilosPorSabor)
             throws SaborNoDisponibleException, BachaVaciaException {
 
         if (cajeroActivo == null || !cajeroActivo.isCajaAbierta()) {
-            throw new IllegalStateException("ERROR: La caja debe estar abierta para registrar pedidos.");
+            throw new IllegalStateException(
+                    "ERROR: La caja debe estar abierta para registrar pedidos."
+            );
         }
+
         if (!validarStockPostres(productos)) {
             return false;
         }
-        cajeroActivo.tomarPedido(new ArrayList<>(consumoKilosPorSabor.keySet()));
 
-        for (Map.Entry<SaborHelado, Double> entrada : consumoKilosPorSabor.entrySet()) {
-            SaborHelado s = entrada.getKey();
-            double kgConsumidos = entrada.getValue();
-            Bacha<SaborHelado> bacha = mostradorBachas.get(s.getNombre().toLowerCase());
-            if (bacha != null) {
-                bacha.eliminarHelado(kgConsumidos);
-                productoDAO.actualizarEstadoYStockSabor(s.getNombre(), s.getEstado(), bacha.getCantidadActualKg());
-            }
-        }
+        validarConsumoBachas(consumoKilosPorSabor);
+
+        cajeroActivo.tomarPedido(
+                new ArrayList<>(consumoKilosPorSabor.keySet())
+        );
 
         Cliente cliente = buscarCliente(dniCliente);
-        PedidoLocal pedido = new PedidoLocal(cliente, cajeroActivo, numeroMesa);
+
+        PedidoLocal pedido = new PedidoLocal(
+                cliente, cajeroActivo, numeroMesa
+        );
+
         for (Producto p : productos) {
             pedido.agregarProducto(p);
         }
@@ -234,12 +240,18 @@ public class HeladeriaSystem {
         boolean exito = ventaDAO.registrarPedido(pedido);
 
         if (exito) {
+
+            descontarConsumoBachas(consumoKilosPorSabor);
+
             if (!descontarStockPostres(productos)) {
-                System.out.println("ERROR: No se pudo actualizar el stock de los postres.");
+                System.out.println(
+                        "ERROR: No se pudo actualizar el stock de los postres."
+                );
                 return false;
             }
 
             double total = pedido.calcularMontoTotal();
+
             cajeroActivo.registrarVenta(total, "LOCAL");
 
             if (cliente != null) {
@@ -247,36 +259,48 @@ public class HeladeriaSystem {
                 personaDAO.actualizarPuntosCliente(cliente);
             }
         }
+
         return exito;
     }
 
-    public boolean realizarPedidoDelivery(String dniCliente, String direccion, double distanciaKm, List<Producto> productos, Map<SaborHelado, Double> consumoKilosPorSabor)
-            throws SaborNoDisponibleException, BachaVaciaException, DistanciaEntregaExcedidaException {
+    public boolean realizarPedidoDelivery(
+            String dniCliente,
+            String direccion,
+            double distanciaKm,
+            List<Producto> productos,
+            Map<SaborHelado, Double> consumoKilosPorSabor)
+            throws SaborNoDisponibleException,
+            BachaVaciaException,
+            DistanciaEntregaExcedidaException {
 
         if (cajeroActivo == null || !cajeroActivo.isCajaAbierta()) {
-            throw new IllegalStateException("ERROR: La caja debe estar abierta para registrar pedidos.");
+            throw new IllegalStateException(
+                    "ERROR: La caja debe estar abierta para registrar pedidos."
+            );
         }
 
         if (distanciaKm > 15.0) {
-            throw new DistanciaEntregaExcedidaException("ERROR: La distancia de entrega (" + distanciaKm + " km) supera el limite maximo permitido (15 km).");
+            throw new DistanciaEntregaExcedidaException(
+                    "ERROR: La distancia de entrega supera el limite maximo permitido (15 km)."
+            );
         }
+
         if (!validarStockPostres(productos)) {
             return false;
         }
-        cajeroActivo.tomarPedido(new ArrayList<>(consumoKilosPorSabor.keySet()));
 
-        for (Map.Entry<SaborHelado, Double> entrada : consumoKilosPorSabor.entrySet()) {
-            SaborHelado s = entrada.getKey();
-            double kgConsumidos = entrada.getValue();
-            Bacha<SaborHelado> bacha = mostradorBachas.get(s.getNombre().toLowerCase());
-            if (bacha != null) {
-                bacha.eliminarHelado(kgConsumidos);
-                productoDAO.actualizarEstadoYStockSabor(s.getNombre(), s.getEstado(), bacha.getCantidadActualKg());
-            }
-        }
+        validarConsumoBachas(consumoKilosPorSabor);
+
+        cajeroActivo.tomarPedido(
+                new ArrayList<>(consumoKilosPorSabor.keySet())
+        );
 
         Cliente cliente = buscarCliente(dniCliente);
-        PedidoDelivery pedido = new PedidoDelivery(cliente, cajeroActivo, direccion, distanciaKm);
+
+        PedidoDelivery pedido = new PedidoDelivery(
+                cliente, cajeroActivo, direccion, distanciaKm
+        );
+
         for (Producto p : productos) {
             pedido.agregarProducto(p);
         }
@@ -284,12 +308,18 @@ public class HeladeriaSystem {
         boolean exito = ventaDAO.registrarPedido(pedido);
 
         if (exito) {
+
+            descontarConsumoBachas(consumoKilosPorSabor);
+
             if (!descontarStockPostres(productos)) {
-                System.out.println("ERROR: No se pudo actualizar el stock de los postres.");
+                System.out.println(
+                        "ERROR: No se pudo actualizar el stock de los postres."
+                );
                 return false;
             }
 
             double total = pedido.calcularMontoTotal();
+
             cajeroActivo.registrarVenta(total, "DELIVERY");
 
             if (cliente != null) {
@@ -297,6 +327,7 @@ public class HeladeriaSystem {
                 personaDAO.actualizarPuntosCliente(cliente);
             }
         }
+
         return exito;
     }
 
@@ -449,6 +480,66 @@ public class HeladeriaSystem {
         }
 
         return true;
+    }
+
+    private void validarConsumoBachas(
+            Map<SaborHelado, Double> consumoKilosPorSabor)
+            throws BachaVaciaException {
+
+        for (Map.Entry<SaborHelado, Double> entrada
+                : consumoKilosPorSabor.entrySet()) {
+
+            SaborHelado sabor = entrada.getKey();
+            Double kgConsumidos = entrada.getValue();
+
+            if (kgConsumidos == null || kgConsumidos <= 0) {
+                throw new IllegalArgumentException(
+                        "La cantidad de helado debe ser mayor a cero."
+                );
+            }
+
+            Bacha<SaborHelado> bacha =
+                    mostradorBachas.get(sabor.getNombre().toLowerCase());
+
+            if (bacha == null ||
+                    bacha.getCantidadActualKg() < kgConsumidos) {
+
+                throw new BachaVaciaException(
+                        "No hay suficiente stock del sabor "
+                                + sabor.getNombre()
+                );
+            }
+        }
+    }
+
+    private void descontarConsumoBachas(
+            Map<SaborHelado, Double> consumoKilosPorSabor)
+            throws BachaVaciaException {
+
+        for (Map.Entry<SaborHelado, Double> entrada
+                : consumoKilosPorSabor.entrySet()) {
+
+            SaborHelado sabor = entrada.getKey();
+            double kgConsumidos = entrada.getValue();
+
+            Bacha<SaborHelado> bacha =
+                    mostradorBachas.get(sabor.getNombre().toLowerCase());
+
+            bacha.eliminarHelado(kgConsumidos);
+
+            boolean actualizado = productoDAO.actualizarEstadoYStockSabor(
+                    sabor.getNombre(),
+                    sabor.getEstado(),
+                    bacha.getCantidadActualKg()
+            );
+
+            if (!actualizado) {
+                System.err.println(
+                        "ERROR: No se pudo actualizar el stock en la BD de "
+                                + sabor.getNombre()
+                );
+            }
+        }
     }
 
 

@@ -1,5 +1,6 @@
 package dao;
 
+import excepciones.BachaVaciaException;
 import modelo.Bacha;
 import modelo.EstadoSabor;
 import modelo.SaborHelado;
@@ -11,7 +12,10 @@ import java.util.Map;
 public class ProductoDAO {
 
     public boolean guardarSabor(SaborHelado sabor, double stockInicialKg) {
-        String sql = "INSERT INTO sabores (nombre, sin_tacc, vegano, estado, stock_kg) VALUES (?, ?, ?, ?, ?)";
+
+        String sql = "INSERT INTO sabores "
+                + "(nombre, sin_tacc, vegano, estado, capacidad_max_kg, stock_kg) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = ConeccionDB.obtenerConexion();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -21,11 +25,13 @@ public class ProductoDAO {
             stmt.setBoolean(3, sabor.isVegano());
             stmt.setString(4, sabor.getEstado().name());
             stmt.setDouble(5, stockInicialKg);
+            stmt.setDouble(6, stockInicialKg);
 
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en ProductoDAO.guardarSabor - " + e.getMessage());
+            System.err.println("ERROR: Fallo en ProductoDAO.guardarSabor - "
+                    + e.getMessage());
             return false;
         }
     }
@@ -51,7 +57,9 @@ public class ProductoDAO {
 
     // Carga las bachas conservando el stock real guardado en la BD
     public Map<String, Bacha<SaborHelado>> obtenerTodasLasBachas() {
+
         Map<String, Bacha<SaborHelado>> bachas = new HashMap<>();
+
         String sql = "SELECT * FROM sabores";
 
         try (Connection con = ConeccionDB.obtenerConexion();
@@ -59,37 +67,50 @@ public class ProductoDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
+
                 String nombre = rs.getString("nombre");
                 boolean sinTacc = rs.getBoolean("sin_tacc");
                 boolean vegano = rs.getBoolean("vegano");
+
                 String estadoStr = rs.getString("estado");
+
+                double capacidadMaxKg = rs.getDouble("capacidad_max_kg");
                 double stockKg = rs.getDouble("stock_kg");
 
-                SaborHelado sabor = new SaborHelado(nombre, sinTacc, vegano);
+                SaborHelado sabor = new SaborHelado(
+                        nombre, sinTacc, vegano
+                );
+
                 if (estadoStr != null) {
                     try {
-                        sabor.setEstado(EstadoSabor.valueOf(estadoStr.toUpperCase()));
+                        sabor.setEstado(
+                                EstadoSabor.valueOf(estadoStr.toUpperCase())
+                        );
                     } catch (IllegalArgumentException e) {
-                        // Estado por defecto en caso de inconsistencia
+                        // Se mantiene el estado por defecto.
                     }
                 }
 
-                Bacha<SaborHelado> bacha = new Bacha<>(sabor, 10.0);
+                Bacha<SaborHelado> bacha =
+                        new Bacha<>(sabor, capacidadMaxKg);
 
-                // Ajustar el stock actual de la bacha según lo leído de la BD
-                double diferencia = 10.0 - stockKg;
-                if (diferencia > 0 && diferencia <= 10.0) {
-                    try {
+                if (stockKg >= 0 && stockKg <= capacidadMaxKg) {
+
+                    double diferencia = capacidadMaxKg - stockKg;
+
+                    if (diferencia > 0) {
                         bacha.eliminarHelado(diferencia);
-                    } catch (Exception ignored) {
                     }
                 }
 
                 bachas.put(nombre.toLowerCase(), bacha);
             }
 
-        } catch (SQLException e) {
-            System.err.println("ERROR: Fallo en ProductoDAO.obtenerTodasLasBachas - " + e.getMessage());
+        } catch (SQLException | BachaVaciaException e) {
+            System.err.println(
+                    "ERROR: Fallo en ProductoDAO.obtenerTodasLasBachas - "
+                            + e.getMessage()
+            );
         }
 
         return bachas;
