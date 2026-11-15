@@ -333,6 +333,11 @@ public class HeladeriaSystem {
 
     public boolean reservarCatering(String dniCliente, LocalDateTime fechaEvento, int cantPersonas, double senia)
             throws ReservaEventoAgotadaException, ClienteNoRegistradoException {
+        if (cantPersonas <= 0) {
+            throw new IllegalArgumentException(
+                    "ERROR: La cantidad de personas debe ser mayor a cero."
+            );
+        }
 
         if (cajeroActivo == null || !cajeroActivo.isCajaAbierta()) {
             throw new IllegalStateException("ERROR: La caja debe estar abierta para registrar catering.");
@@ -349,6 +354,12 @@ public class HeladeriaSystem {
         }
 
         double total = cantPersonas * precioPorPersona;
+
+        if (senia < 0 || senia > total) {
+            throw new IllegalArgumentException(
+                    "ERROR: La seña debe estar entre cero y el monto total."
+            );
+        }
 
         Catering catering = new Catering(cliente, cajeroActivo, fechaEvento, cantPersonas, senia, total);
         boolean exito = ventaDAO.registrarCatering(catering);

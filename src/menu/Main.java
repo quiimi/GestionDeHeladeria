@@ -403,6 +403,12 @@ public class Main {
                     }
 
                     int cantPersonas = Menu.leerEntero(teclado, "Ingrese cantidad de personas: ");
+                    if (cantPersonas <= 0) {
+                        System.out.println(
+                                "ERROR: La cantidad de personas debe ser mayor a cero."
+                        );
+                        break;
+                    }
                     double precioPersona = sistema.getPrecio("Catering");
                     if (precioPersona <= 0) {
                         precioPersona = 5000.0;
@@ -514,4 +520,3 @@ public class Main {
         System.out.println("------------------------------------------------------------");
     }
 }
-
