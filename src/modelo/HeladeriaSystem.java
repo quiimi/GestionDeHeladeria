@@ -26,6 +26,7 @@ public class HeladeriaSystem {
     private Cajero cajeroActivo;
     private Duenio duenioActual;
 
+    // Inicializa el sistema y carga los datos guardados en la base de datos.
     public HeladeriaSystem() {
         this.personaDAO = new PersonaDAO();
         this.productoDAO = new ProductoDAO();
@@ -42,6 +43,7 @@ public class HeladeriaSystem {
         cargarDatosDesdeBD();
     }
 
+    // Carga clientes, cajeros, sabores, precios y stock desde la base de datos.
     private void cargarDatosDesdeBD() {
         List<Cliente> listaClientes = personaDAO.listarClientes();
         for (Cliente c : listaClientes) {
@@ -58,10 +60,12 @@ public class HeladeriaSystem {
         this.stockPostres = productoDAO.obtenerStockPostres();
     }
 
+    // Devuelve el precio asociado al concepto indicado.
     public double getPrecio(String concepto) {
         return preciosMap.getOrDefault(concepto, 0.0);
     }
 
+    // Actualiza el precio en la base de datos y en el mapa local.
     public boolean actualizarPrecio(String concepto, double nuevoPrecio) {
         if (precioDAO.actualizarPrecio(concepto, nuevoPrecio)) {
             preciosMap.put(concepto, nuevoPrecio);
@@ -70,10 +74,12 @@ public class HeladeriaSystem {
         return false;
     }
 
+    // Devuelve el mapa con los precios del sistema.
     public Map<String, Double> getPreciosMap() {
         return preciosMap;
     }
 
+    // Busca un cajero por DNI y lo establece como usuario activo.
     public boolean setCajeroActivoPorDni(String dni) {
         if (cajerosMap.containsKey(dni)) {
             this.cajeroActivo = cajerosMap.get(dni);
@@ -91,6 +97,7 @@ public class HeladeriaSystem {
     }
 
 
+    // Registra un cajero nuevo o reactiva uno que estaba dado de baja.
     public boolean registrarCajero(String dni, String nombre, String username) {
         Persona existente = personaDAO.buscarPorDni(dni);
 
@@ -122,6 +129,7 @@ public class HeladeriaSystem {
         return reactivarCajero(dni);
     }
 
+    // Busca un cajero que esté registrado pero dado de baja.
     public Cajero buscarCajeroDadoDeBaja(String dni) {
         Persona p = personaDAO.buscarPorDni(dni);
         if (p instanceof Cajero && !personaDAO.estaActivo(dni)) {
@@ -131,6 +139,7 @@ public class HeladeriaSystem {
     }
 
 
+    // Vuelve a dar de alta un cajero que estaba dado de baja.
     public boolean reactivarCajero(String dni) {
         Cajero cajeroOriginal = buscarCajeroDadoDeBaja(dni);
         if (cajeroOriginal == null) {
@@ -148,6 +157,7 @@ public class HeladeriaSystem {
         return false;
     }
 
+    // Da de baja al cajero indicado y lo quita de los datos activos.
     public boolean eliminarEmpleado(String dni) {
         if (personaDAO.darDeBajaCajero(dni)) {
             cajerosMap.remove(dni);
@@ -163,6 +173,7 @@ public class HeladeriaSystem {
         return false;
     }
 
+    // Registra un cliente nuevo y lo agrega al mapa de clientes.
     public boolean registrarCliente(String dni, String nombre) throws ClienteYaExisteException {
         if (clientesMap.containsKey(dni) || personaDAO.buscarPorDni(dni) != null) {
             throw new ClienteYaExisteException("ERROR: Ya existe una persona registrada con el DNI " + dni + ".");
@@ -176,6 +187,7 @@ public class HeladeriaSystem {
         return false;
     }
 
+    // Busca un cliente por DNI y lo carga en el mapa si hace falta.
     public Cliente buscarCliente(String dni) {
         if (!clientesMap.containsKey(dni)) {
             Persona p = personaDAO.buscarPorDni(dni);
@@ -186,6 +198,7 @@ public class HeladeriaSystem {
         return clientesMap.get(dni);
     }
 
+    // Registra un sabor nuevo y crea su bacha en el mostrador.
     public void darDeAltaSabor(String nombre, boolean sinTacc, boolean vegano, double capacidadBachaKg) {
         SaborHelado sabor = new SaborHelado(nombre, sinTacc, vegano);
         if (productoDAO.guardarSabor(sabor, capacidadBachaKg)) {
@@ -195,6 +208,7 @@ public class HeladeriaSystem {
         }
     }
 
+    // Agrega kilos de helado a una bacha y actualiza su stock.
     public void recargarHeladoBacha(String nombreSabor, double kg) throws BachaLlenaException {
         Bacha<SaborHelado> bacha = mostradorBachas.get(nombreSabor.toLowerCase());
         if (bacha == null) {
@@ -204,6 +218,7 @@ public class HeladeriaSystem {
         productoDAO.actualizarEstadoYStockSabor(bacha.getSabor().getNombre(), bacha.getSabor().getEstado(), bacha.getCantidadActualKg());
     }
 
+    // Registra un pedido para consumir en el local y actualiza los stocks.
     public boolean realizarPedidoLocal(
             String dniCliente,
             int numeroMesa,
@@ -263,6 +278,7 @@ public class HeladeriaSystem {
         return exito;
     }
 
+    // Registra un pedido para delivery y actualiza los stocks.
     public boolean realizarPedidoDelivery(
             String dniCliente,
             String direccion,
@@ -331,6 +347,7 @@ public class HeladeriaSystem {
         return exito;
     }
 
+    // Registra una reserva de catering y suma los puntos correspondientes al cliente.
     public boolean reservarCatering(String dniCliente, LocalDateTime fechaEvento, int cantPersonas, double senia)
             throws ReservaEventoAgotadaException, ClienteNoRegistradoException {
         if (cantPersonas <= 0) {
@@ -376,14 +393,17 @@ public class HeladeriaSystem {
         return exito;
     }
 
+    // Devuelve el cajero que tiene la sesión activa.
     public Cajero getCajeroActivo() {
         return cajeroActivo;
     }
 
+    // Devuelve el dueño que tiene la sesión activa.
     public Duenio getDuenioActual() {
         return duenioActual;
     }
 
+    // Comprueba si ya hay un dueño registrado en el sistema.
     public boolean hayDuenioRegistrado() {
         if (duenioActual == null) {
             duenioActual = personaDAO.buscarDuenio();
@@ -391,6 +411,7 @@ public class HeladeriaSystem {
         return duenioActual != null;
     }
 
+    // Registra al dueño de la heladería si sus datos son válidos.
     public boolean registrarDuenio(String dni, String nombre, String username) {
         if (dni.isEmpty() || nombre.isEmpty() || username.isEmpty()) {
             throw new IllegalArgumentException("ERROR: Todos los campos son obligatorios.");
@@ -405,6 +426,7 @@ public class HeladeriaSystem {
         }
         return false;
     }
+    // Busca al dueño por DNI e inicia su sesión.
     public boolean iniciarSesionDuenio(String dni) {
         Persona p = personaDAO.buscarPorDni(dni);
         if (p instanceof Duenio) {
@@ -414,6 +436,7 @@ public class HeladeriaSystem {
         return false;
     }
 
+    // Muestra por consola el historial de ventas registrado.
     public void mostrarHistorialVentas() {
         List<String> historial = ventaDAO.obtenerHistorialVentas();
 
@@ -433,10 +456,12 @@ public class HeladeriaSystem {
     }
 
 
+    // Devuelve la cantidad disponible del tipo de postre indicado.
     public int getStockPostre(TipoPostre tipo) {
         return stockPostres.getOrDefault(tipo, 0);
     }
 
+    // Comprueba que haya stock suficiente para los postres del pedido.
     private boolean validarStockPostres(List<Producto> productos) {
         Map<TipoPostre, Integer> cantidades = new HashMap<>();
 
@@ -465,6 +490,7 @@ public class HeladeriaSystem {
         return true;
     }
 
+    // Descuenta del stock las unidades de postres incluidas en el pedido.
     private boolean descontarStockPostres(List<Producto> productos) {
         Map<TipoPostre, Integer> cantidades = new HashMap<>();
 
@@ -493,6 +519,7 @@ public class HeladeriaSystem {
         return true;
     }
 
+    // Comprueba que las bachas tengan los kilos necesarios para el pedido.
     private void validarConsumoBachas(
             Map<SaborHelado, Double> consumoKilosPorSabor)
             throws BachaVaciaException {
@@ -523,6 +550,7 @@ public class HeladeriaSystem {
         }
     }
 
+    // Descuenta de las bachas los kilos utilizados y actualiza la base de datos.
     private void descontarConsumoBachas(
             Map<SaborHelado, Double> consumoKilosPorSabor)
             throws BachaVaciaException {
@@ -554,14 +582,17 @@ public class HeladeriaSystem {
     }
 
 
+    // Devuelve el mapa de bachas que se encuentran en el mostrador.
     public Map<String, Bacha<SaborHelado>> getMostradorBachas() {
         return mostradorBachas;
     }
 
+    // Devuelve la lista de empleados registrados.
     public List<Cajero> obtenerListaEmpleados() {
         return personaDAO.listarEmpleados();
     }
 
+    // Devuelve la lista de clientes registrados.
     public List<Cliente> obtenerListaClientes() {
         return personaDAO.listarClientes();
     }

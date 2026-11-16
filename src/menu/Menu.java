@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 public class Menu {
 
+    // Lee un número entero y vuelve a pedirlo si el ingreso no es válido.
     public static int leerEntero(Scanner teclado, String mensaje) {
         int valor = 0;
         boolean valido = false;
@@ -25,6 +26,7 @@ public class Menu {
         return valor;
     }
 
+    // Lee un número decimal mayor que cero y valida el ingreso.
     public static double leerDouble(Scanner teclado, String mensaje) {
         double valor = 0;
         boolean valido = false;
@@ -46,6 +48,7 @@ public class Menu {
         return valor;
     }
 
+    // Muestra los sabores que están disponibles y tienen stock.
     public static void mostrarSaboresDisponibles(HeladeriaSystem sistema) {
         System.out.println("\n--- SABORES DISPONIBLES EN MOSTRADOR ---");
         boolean hayDisponibles = false;
@@ -61,6 +64,7 @@ public class Menu {
         }
     }
 
+    // Permite elegir productos y sabores, y calcula el consumo de cada bacha.
     public static Map<SaborHelado, Double> armarProductosYSabores(Scanner teclado, HeladeriaSystem sistema, List<Producto> productos) {
         Map<SaborHelado, Double> consumo = new HashMap<>();
 
