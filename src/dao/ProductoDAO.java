@@ -9,8 +9,16 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * DAO encargado de gestionar la persistencia de los productos
+ * relacionados con los sabores, las bachas y el stock de postres.
+ */
 public class ProductoDAO {
 
+    /**
+     * Guarda un nuevo sabor en la base de datos.
+     * Almacena sus características, estado y stock inicial.
+     */
     public boolean guardarSabor(SaborHelado sabor, double stockInicialKg) {
 
         String sql = "INSERT INTO sabores "
@@ -36,7 +44,10 @@ public class ProductoDAO {
         }
     }
 
-    // Actualiza tanto el estado como la cantidad de kilos en la BD
+    /**
+     * Actualiza el estado y la cantidad de stock de un sabor.
+     * Busca el sabor sin distinguir entre mayúsculas y minúsculas.
+     */
     public boolean actualizarEstadoYStockSabor(String nombreSabor, EstadoSabor estado, double stockKg) {
         String sql = "UPDATE sabores SET estado = ?, stock_kg = ? WHERE LOWER(nombre) = LOWER(?)";
 
@@ -55,7 +66,13 @@ public class ProductoDAO {
         }
     }
 
-    // Carga las bachas conservando el stock real guardado en la BD
+    /**
+     * Recupera todos los sabores almacenados y reconstruye sus bachas.
+     * Conserva la capacidad máxima y el stock real registrado en la base.
+     *
+     * @return un HashMap cuya clave es el nombre del sabor
+     * y cuyo valor es la bacha correspondiente.
+     */
     public Map<String, Bacha<SaborHelado>> obtenerTodasLasBachas() {
 
         Map<String, Bacha<SaborHelado>> bachas = new HashMap<>();
@@ -66,6 +83,7 @@ public class ProductoDAO {
              PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
+            // Recorre todos los sabores registrados.
             while (rs.next()) {
 
                 String nombre = rs.getString("nombre");
@@ -77,23 +95,27 @@ public class ProductoDAO {
                 double capacidadMaxKg = rs.getDouble("capacidad_max_kg");
                 double stockKg = rs.getDouble("stock_kg");
 
+                // Reconstruye el objeto SaborHelado con los datos obtenidos.
                 SaborHelado sabor = new SaborHelado(
                         nombre, sinTacc, vegano
                 );
 
+                // Convierte el texto de la base de datos al enum EstadoSabor.
                 if (estadoStr != null) {
                     try {
                         sabor.setEstado(
                                 EstadoSabor.valueOf(estadoStr.toUpperCase())
                         );
                     } catch (IllegalArgumentException e) {
-                        // Se mantiene el estado por defecto.
+                        // Se mantiene el estado por defecto si el valor no es válido.
                     }
                 }
 
+                // Crea una bacha con su capacidad máxima.
                 Bacha<SaborHelado> bacha =
                         new Bacha<>(sabor, capacidadMaxKg);
 
+                // Ajusta la cantidad de helado para representar el stock guardado.
                 if (stockKg >= 0 && stockKg <= capacidadMaxKg) {
 
                     double diferencia = capacidadMaxKg - stockKg;
@@ -103,6 +125,7 @@ public class ProductoDAO {
                     }
                 }
 
+                // Guarda la bacha en el mapa usando el nombre del sabor como clave.
                 bachas.put(nombre.toLowerCase(), bacha);
             }
 
@@ -116,6 +139,11 @@ public class ProductoDAO {
         return bachas;
     }
 
+    /**
+     * Obtiene el stock de todos los tipos de postres.
+     * Utiliza un HashMap donde la clave es el enum TipoPostre
+     * y el valor es la cantidad disponible.
+     */
     public Map<modelo.TipoPostre, Integer> obtenerStockPostres() {
         Map<modelo.TipoPostre, Integer> stockPostres = new HashMap<>();
 
@@ -125,6 +153,7 @@ public class ProductoDAO {
              PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
+            // Convierte cada tipo de postre almacenado en su valor del enum.
             while (rs.next()) {
                 modelo.TipoPostre tipo = modelo.TipoPostre.valueOf(
                         rs.getString("tipo_postre")
@@ -140,6 +169,10 @@ public class ProductoDAO {
         return stockPostres;
     }
 
+    /**
+     * Descuenta unidades del stock de un tipo de postre.
+     * La consulta verifica que exista stock suficiente antes de descontar.
+     */
     public boolean descontarStockPostre(modelo.TipoPostre tipo, int cantidad) {
         String sql = "UPDATE stock_postres "
                 + "SET stock = stock - ? "
@@ -160,6 +193,9 @@ public class ProductoDAO {
         }
     }
 
+    /**
+     * Incrementa el stock de un tipo de postre en la cantidad indicada.
+     */
     public boolean reponerStockPostre(modelo.TipoPostre tipo, int cantidad) {
         String sql = "UPDATE stock_postres SET stock = stock + ? WHERE tipo_postre = ?";
 

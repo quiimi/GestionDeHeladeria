@@ -10,16 +10,19 @@ import java.util.Scanner;
 
 public class Main {
 
+    // Punto de entrada del programa. Inicializa el sistema y controla el acceso.
     public static void main(String[] args) {
         Scanner teclado = new Scanner(System.in);
         HeladeriaSystem sistema = new HeladeriaSystem();
 
+        // Si todavía no existe un dueño, solicita registrar el primero.
         if (!sistema.hayDuenioRegistrado()) {
             registrarPrimerDuenio(teclado, sistema);
         }
 
         int opcionAcceso = 0;
 
+        // Mantiene el menú principal activo hasta que el usuario elija salir.
         do {
             mostrarMenuAcceso();
 
@@ -29,6 +32,8 @@ public class Main {
                 case 1:
                     System.out.print("Ingrese su DNI de dueño: ");
                     String dniDuenio = teclado.nextLine().trim();
+
+                    // Verifica los datos del dueño antes de permitir el acceso.
                     if (sistema.iniciarSesionDuenio(dniDuenio)) {
                         menuDuenio(teclado, sistema);
                     } else {
@@ -51,6 +56,7 @@ public class Main {
         teclado.close();
     }
 
+    // Registra al primer dueño cuando se inicia el sistema por primera vez.
     private static void registrarPrimerDuenio(Scanner teclado, HeladeriaSystem sistema) {
         System.out.println("\n============================================================");
         System.out.println("                  CONFIGURACION INICIAL");
@@ -79,6 +85,7 @@ public class Main {
         System.out.println("Dueño registrado correctamente.");
     }
 
+    // Controla las opciones disponibles para el dueño de la heladería.
     private static void menuDuenio(Scanner teclado, HeladeriaSystem sistema) {
         int opcion = 0;
 
@@ -115,6 +122,8 @@ public class Main {
                     System.out.println("\n------------------------------------------------------------");
                     System.out.println("                    EMPLEADOS REGISTRADOS");
                     System.out.println("------------------------------------------------------------");
+
+                    // Obtiene y muestra la lista de empleados registrados.
                     List<Cajero> empleados = sistema.obtenerListaEmpleados();
                     if (empleados.isEmpty()) {
                         System.out.println("No hay empleados registrados.");
@@ -142,6 +151,7 @@ public class Main {
                     System.out.println("\n------------------------------------------------------------");
                     System.out.println("                  SABORES DISPONIBLES");
                     System.out.println("------------------------------------------------------------");
+
                     if (sistema.getMostradorBachas().isEmpty()) {
                         System.out.println("No hay sabores ingresados en el sistema.");
                         break;
@@ -172,6 +182,7 @@ public class Main {
 
                     double kg = Menu.leerDouble(teclado, "Ingrese kilos a agregar: ");
 
+                    // Intenta recargar la bacha y controla posibles errores.
                     try {
                         sistema.recargarHeladoBacha(saborRecarga, kg);
                         System.out.println("Bacha recargada con exito.");
@@ -186,6 +197,8 @@ public class Main {
                     System.out.println("\n------------------------------------------------------------");
                     System.out.println("                   ESTADO DE LAS BACHAS");
                     System.out.println("------------------------------------------------------------");
+
+                    // Recorre las bachas y muestra el stock y estado de cada sabor.
                     for (String clave : sistema.getMostradorBachas().keySet()) {
                         Bacha<SaborHelado> b = sistema.getMostradorBachas().get(clave);
                         System.out.println("Sabor: " + b.getSabor().getNombre()
@@ -215,13 +228,16 @@ public class Main {
         } while (opcion != 9);
     }
 
+    // Permite consultar los precios actuales y modificar uno seleccionado.
     private static void gestionarPrecios(Scanner teclado, HeladeriaSystem sistema) {
         System.out.println("\n------------------------------------------------------------");
         System.out.println("                    PRECIOS ACTUALES");
         System.out.println("------------------------------------------------------------");
+
         Map<String, Double> precios = sistema.getPreciosMap();
         List<String> claves = new ArrayList<>(precios.keySet());
 
+        // Muestra los conceptos y sus precios disponibles.
         for (int i = 0; i < claves.size(); i++) {
             System.out.println((i + 1) + ". " + claves.get(i) + ": $" + precios.get(claves.get(i)));
         }
@@ -232,6 +248,7 @@ public class Main {
             return;
         }
 
+        // Obtiene el concepto elegido y solicita su nuevo valor.
         String conceptoElegido = claves.get(seleccion - 1);
         double nuevoValor = Menu.leerDouble(teclado, "Ingrese nuevo valor para " + conceptoElegido + ": $");
 
@@ -242,7 +259,10 @@ public class Main {
         }
     }
 
+    // Controla las operaciones que puede realizar un cajero.
     private static void menuCajero(Scanner teclado, HeladeriaSystem sistema) {
+
+        // Si no hay un cajero activo, solicita su DNI para iniciar sesión.
         if (sistema.getCajeroActivo() == null) {
             System.out.print("Ingrese DNI del cajero para iniciar sesion: ");
             String dniSesion = teclado.nextLine();
@@ -286,6 +306,7 @@ public class Main {
                     System.out.print("Ingrese Nombre del cliente: ");
                     String nomCli = teclado.nextLine();
 
+                    // Registra al cliente y controla si ya existe.
                     try {
                         sistema.registrarCliente(dniCli, nomCli);
                     } catch (ClienteYaExisteException e) {
@@ -297,6 +318,8 @@ public class Main {
                     System.out.println("\n------------------------------------------------------------");
                     System.out.println("                   CLIENTES REGISTRADOS");
                     System.out.println("------------------------------------------------------------");
+
+                    // Obtiene los clientes y muestra sus datos y puntos acumulados.
                     List<Cliente> clientes = sistema.obtenerListaClientes();
                     if (clientes.isEmpty()) {
                         System.out.println("No hay clientes registrados.");
@@ -308,6 +331,7 @@ public class Main {
                     break;
 
                 case 6:
+                    // Comprueba que la caja esté abierta antes de tomar un pedido.
                     if (!sistema.getCajeroActivo().isCajaAbierta()) {
                         System.out.println("ERROR: La caja debe estar abierta para realizar pedidos.");
                         break;
@@ -321,6 +345,7 @@ public class Main {
                         break;
                     }
 
+                    // Valida que el número de mesa esté dentro del rango permitido.
                     int mesa = 0;
                     do {
                         mesa = Menu.leerEntero(teclado, "Ingrese numero de mesa (1 a 10): ");
@@ -329,6 +354,7 @@ public class Main {
                         }
                     } while (mesa < 1 || mesa > 10);
 
+                    // Arma la lista de productos y el consumo de sabores del pedido.
                     List<Producto> productosLocal = new ArrayList<>();
                     Map<SaborHelado, Double> consumoLocal = Menu.armarProductosYSabores(teclado, sistema, productosLocal);
                     if (productosLocal.isEmpty()) break;
@@ -348,6 +374,7 @@ public class Main {
                     break;
 
                 case 7:
+                    // Comprueba que la caja esté abierta antes de tomar un pedido delivery.
                     if (!sistema.getCajeroActivo().isCajaAbierta()) {
                         System.out.println("ERROR: La caja debe estar abierta para realizar pedidos.");
                         break;
@@ -390,6 +417,7 @@ public class Main {
                     break;
 
                 case 8:
+                    // Para reservar catering también es necesario tener la caja abierta.
                     if (!sistema.getCajeroActivo().isCajaAbierta()) {
                         System.out.println("ERROR: La caja debe estar abierta para reservar catering.");
                         break;
@@ -409,6 +437,8 @@ public class Main {
                         );
                         break;
                     }
+
+                    // Calcula el importe total según la cantidad de personas y el precio vigente.
                     double precioPersona = sistema.getPrecio("Catering");
                     if (precioPersona <= 0) {
                         precioPersona = 5000.0;
@@ -418,6 +448,7 @@ public class Main {
                     System.out.println("Precio por persona: $" + precioPersona);
                     System.out.println("Monto total del catering: $" + totalCalculado);
 
+                    // Solicita la seña y evita que supere el importe total.
                     double senia = 0;
                     do {
                         senia = Menu.leerDouble(teclado, "Ingrese monto de seña abonado: ");
@@ -455,6 +486,7 @@ public class Main {
     // METODOS DE PRESENTACION DE MENUS
     // ------------------------------------------------------------
 
+    // Muestra las opciones de acceso al sistema.
     private static void mostrarMenuAcceso() {
         System.out.println("\n");
         System.out.println("============================================================");
@@ -470,6 +502,7 @@ public class Main {
         System.out.println("  ----------------------------------------------------------");
     }
 
+    // Muestra las opciones disponibles para el dueño.
     private static void mostrarMenuDuenio() {
         System.out.println("\n");
         System.out.println("============================================================");
@@ -494,6 +527,7 @@ public class Main {
         System.out.println("------------------------------------------------------------");
     }
 
+    // Muestra las opciones del cajero y el nombre del usuario activo.
     private static void mostrarMenuCajero(String nombreCajero) {
         System.out.println("\n");
         System.out.println("============================================================");
